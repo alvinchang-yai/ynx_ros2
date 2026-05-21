@@ -1,6 +1,4 @@
-# Blender 3.3.21
-# www.blender.org
-mtllib nex10_link_4_r.mtl
+mtllib nex10_link_4.mtl
 o nex10_link_4_r
 v 0.328524 -0.005276 0.970000
 v 0.328510 -0.005250 0.970030
