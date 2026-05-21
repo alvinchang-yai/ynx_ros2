@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="nex10">
+  <xacro:arg name="tf_prefix" default=""/>
+
+  <xacro:include filename="$(find ynx_bringup)/srdf/nex10.srdf_macro.xacro"/>
+
+  <xacro:nex10_srdf_macro tf_prefix="$(arg tf_prefix)"/>
+
+</robot>

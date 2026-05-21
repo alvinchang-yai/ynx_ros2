@@ -1,0 +1,60 @@
+/**/controller_manager:
+  ros__parameters:
+    update_rate: 500
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    force_torque_sensor_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
+/**/joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - $(var tf_prefix)joint_1
+      - $(var tf_prefix)joint_2
+      - $(var tf_prefix)joint_3
+      - $(var tf_prefix)joint_4
+      - $(var tf_prefix)joint_5
+      - $(var tf_prefix)joint_6
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    constraints:
+      decelerate_on_cancel: true
+      $(var tf_prefix)joint_1:
+        max_deceleration_on_cancel: 0.5
+      $(var tf_prefix)joint_2:
+        max_deceleration_on_cancel: 0.5
+      $(var tf_prefix)joint_3:
+        max_deceleration_on_cancel: 0.5
+      $(var tf_prefix)joint_4:
+        max_deceleration_on_cancel: 0.5
+      $(var tf_prefix)joint_5:
+        max_deceleration_on_cancel: 0.5
+      $(var tf_prefix)joint_6:
+        max_deceleration_on_cancel: 0.5
+
+/**/force_torque_sensor_broadcaster:
+  ros__parameters:
+    sensor_name: $(var tf_prefix)ft_sensor
+    frame_id: $(var tf_prefix)ft_sensor
+    state_interface_names:
+      - force.x
+      - force.y
+      - force.z
+      - torque.x
+      - torque.y
+      - torque.z
+    sensor_filter_chain:
+      filter1:
+        name: fts_lowpass_filter
+        type: control_filters/LowPassFilterWrench 
+        params:
+          sampling_frequency: 500.0 
+          damping_frequency: 5.0 
+          damping_intensity: 0.0

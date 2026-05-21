@@ -1,0 +1,25 @@
+/**:
+  ros__parameters:
+    moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+    trajectory_execution:
+      allowed_execution_duration_scaling: 1.2
+      allowed_goal_duration_margin: 0.5
+      allowed_start_tolerance: 0.01
+      execution_duration_monitoring: false # May lead to unexpectedly aborted goals with scaled JTC
+
+    moveit_simple_controller_manager:
+      controller_names:
+        - joint_trajectory_controller
+
+      joint_trajectory_controller:
+        action_ns: follow_joint_trajectory
+        type: FollowJointTrajectory
+        default: true
+        joints:
+          - $(var tf_prefix)joint_1
+          - $(var tf_prefix)joint_2
+          - $(var tf_prefix)joint_3
+          - $(var tf_prefix)joint_4
+          - $(var tf_prefix)joint_5
+          - $(var tf_prefix)joint_6

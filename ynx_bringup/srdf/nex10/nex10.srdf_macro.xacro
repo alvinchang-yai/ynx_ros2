@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:macro name="nex10_srdf_macro" params="tf_prefix">
+    <group name="${tf_prefix}manipulator">
+      <chain base_link="${tf_prefix}base_link" tip_link="${tf_prefix}tool0" />
+    </group>
+    <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="${tf_prefix}base_link"/>
+    <group_state name="home" group="${tf_prefix}manipulator">
+      <joint name="${tf_prefix}joint_1" value="0" />
+      <joint name="${tf_prefix}joint_2" value="0" />
+      <joint name="${tf_prefix}joint_3" value="0" />
+      <joint name="${tf_prefix}joint_4" value="0" />
+      <joint name="${tf_prefix}joint_5" value="0" />
+      <joint name="${tf_prefix}joint_6" value="0" />
+    </group_state>
+    <disable_collisions link1="${tf_prefix}base_link" link2="${tf_prefix}link_0" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_0" link2="${tf_prefix}link_1" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_1" link2="${tf_prefix}link_2" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_1" link2="${tf_prefix}link_3" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_2" link2="${tf_prefix}link_3" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_3" link2="${tf_prefix}link_4" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_3" link2="${tf_prefix}link_5" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_3" link2="${tf_prefix}link_6" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_3" link2="${tf_prefix}flange" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_3" link2="${tf_prefix}tool0" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_4" link2="${tf_prefix}link_5" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_4" link2="${tf_prefix}link_6" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_4" link2="${tf_prefix}flange" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_4" link2="${tf_prefix}tool0" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_5" link2="${tf_prefix}link_6" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_5" link2="${tf_prefix}flange" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_5" link2="${tf_prefix}tool0" reason="Never" />
+    <disable_collisions link1="${tf_prefix}link_6" link2="${tf_prefix}flange" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_6" link2="${tf_prefix}tool0" reason="Never" />
+    <disable_collisions link1="${tf_prefix}flange" link2="${tf_prefix}tool0" reason="Adjacent" />
+  </xacro:macro>
+</robot>
