@@ -1,0 +1,116 @@
+/**
+ * Copyright (c) 2023 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - Event related APIs
+ *
+ * This file provides event related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+ 
+import "rcs/v1/timestamp.proto";
+
+/**
+ * `Event` service provides a way to get events from the robot controller.
+ *
+ * You can get events when the data in the robot controller is changed.
+ * To start watching events, you need to resister events which you want to watch by calling `RegisterEvent()`.
+ * 
+ * The `RegisterEvent()` returns a handle linked the event.
+ * You can call `ReceiveEventStream()` with the handle to receive the events.
+ *
+ * The events are queued on the robot control service until a client call `ReceiveEventStream()`.
+ * If the number of events reaches the limit of the queue, the events in the queue will be deleted from the oldest one.
+ *
+ * If you want to wait new events, you need to call `ClearEvents()` before call `ReceiveEventStream()`.
+ *
+ * If you call `ReceiveEventStream()` for the same handle from multiple context(thread or process), each calls dequeues the events.
+ *
+ * [ERRORS]
+ * - See each response message definitions for RPC specific errors.
+ */
+service EventService {
+    // Register event which you want to watch and return event handle.
+    rpc RegisterEvent(RegisterEventRequest) returns (RegisterEventResponse);
+    // Receive event by event handle
+    rpc ReceiveEventStream(ReceiveEventStreamRequest) returns (stream ReceiveEventStreamResponse);
+    // Clear event queue on the robot control service.
+    rpc ClearEventQueue(ClearEventQueueRequest) returns (ClearEventQueueResponse);
+}
+
+message VariableByNameEventRequest {
+    string name = 1;
+    int64 size = 2;
+}
+
+message VariableByNameEventResponse {
+    bytes data = 1;
+}
+
+message RegisterEventRequest {
+    int64 timeout = 1;
+
+    oneof event {
+        VariableByNameEventRequest variable_by_name = 2;
+    }
+}
+
+message RegisterEventResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_TIMEOUT_OUTRANGE = 3;
+        STATUS_SIZE_ERROR = 4;
+        STATUS_VARIABLE_NOT_FOUND = 5;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+
+    int64 handle = 3;
+}
+
+message ReceiveEventStreamRequest {
+    int64 handle = 1;
+}
+
+message ReceiveEventStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_INVALID_HANDLE = 3;
+        STATUS_EVENT_TIMEOUT = 4;
+        STATUS_SIZE_ERROR = 6;
+        STATUS_VARIABLE_NOT_FOUND = 5;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+
+    oneof event {
+        VariableByNameEventResponse variable_by_name = 3;
+    }
+}
+
+message ClearEventQueueRequest {
+    int64 handle = 1;
+}
+
+message ClearEventQueueResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_INVALID_HANDLE = 3;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+}

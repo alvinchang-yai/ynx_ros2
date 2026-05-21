@@ -1,0 +1,73 @@
+/**
+ * Copyright (c) 2023 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - Mode get related APIs
+ *
+ * This file provides mode get related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+
+/**
+ * `ModeGet` service provides a way to get a mode on the robot controller.
+ *
+ * [ERRORS]
+ * - See the status defined in each response message.
+ */
+service ModeGetService {
+    // Get security mode on the robot controller.
+    rpc GetSecurityMode(GetSecurityModeRequest) returns(GetSecurityModeResponse);
+    // Get mode on the robot controller.
+    rpc GetMode(GetModeRequest) returns(GetModeResponse);
+}
+
+message GetSecurityModeRequest {
+    // empty
+}
+
+message GetSecurityModeResponse {
+    Timestamp timestamp = 1;
+    enum SecurityMode {
+        SECURITY_MODE_UNSPECIFIED = 0;
+        SECURITY_MODE_OPERATION = 1;
+        SECURITY_MODE_EDIT = 2;
+        SECURITY_MODE_MANAGEMENT = 3;
+        SECURITY_MODE_SAFETY = 4;
+        SECURITY_MODE_ONETIME_MANAGEMENT = 5;
+    }
+    SecurityMode security_mode = 2;
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 3;
+}
+
+message GetModeRequest {
+    // empty
+}
+
+message GetModeResponse {
+    Timestamp timestamp = 1;
+    enum Mode {
+        MODE_UNSPECIFIED = 0;
+        MODE_TEACH = 1;
+        MODE_PLAY = 2;
+    }
+    Mode mode = 2;
+    int32 remote = 3;   //remote 0:OFF , 1:ON
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 4;
+}

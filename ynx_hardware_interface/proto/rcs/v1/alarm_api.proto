@@ -1,0 +1,158 @@
+/**
+ * Copyright (c) 2022 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - Alarm control related APIs
+ *
+ * This file provides alarm control related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+
+/**
+ * `AlarmControl` service provides a way to control an alarm on the robot controller.
+ *
+ * [ERRORS]
+ * - See the status defined in each response message.
+ */
+service AlarmControlService {
+    // Get the error and alarms on the robot controller.
+    rpc GetAlarmError(GetAlarmErrorRequest) returns (GetAlarmErrorResponse);
+    // Clear the alarms on the robot controller.
+    rpc ClearAlarmError(ClearAlarmErrorRequest) returns (ClearAlarmErrorResponse);
+    // Set the alarm on the robot controller
+    rpc SetAlarm(SetAlarmRequest) returns (SetAlarmResponse);
+}
+
+message GetAlarmErrorRequest {
+    // empty
+}
+
+message Alarm {
+    uint32 code = 1; // This shows an Alarm number such as `4414`.
+    string message = 2; // This shows the name of Alarm. ex.) `EXCESSIVE SEGMENT`
+    uint32 control_group = 3; // This shows which control group gives the alarm.
+    uint32 sub_code = 4; // This shows detailed information data for the alarm.
+
+    enum SubCodeType {
+        SUB_CODE_TYPE_UNSPECIFIED = 0;
+        SUB_CODE_TYPE_00 = 1;
+        SUB_CODE_TYPE_01 = 2;
+        SUB_CODE_TYPE_02 = 3;
+        SUB_CODE_TYPE_03 = 4;
+        SUB_CODE_TYPE_04 = 5;
+        SUB_CODE_TYPE_05 = 6;
+        SUB_CODE_TYPE_06 = 7;
+        SUB_CODE_TYPE_07 = 8;
+    }
+    SubCodeType sub_code_type = 5; // This shows the `sub_code` data format.
+
+    string sub_code_text = 6; // This shows the `sub_code` as string. ex.) [R1: HIGH S]
+    string optional_text = 7; // This shows the more detailed information for alarm such as a task number. ex.) TASK#0
+    string date = 8; // This shows the date when the alarm is given. The format is `yyyy/mm/dd hh:mm:ss`.
+}
+
+message Error {
+    uint32 code = 1; // This shows an Error number such as `110`.
+    string message = 2; // This shows the meaning of the error as string. ex.) Turn on servo power.
+    uint32 control_group = 3; // This shows which control group gives the error.
+    uint32 sub_code = 4; // This shows detailed information data for the error.
+
+    enum SubCodeType {
+        SUB_CODE_TYPE_UNSPECIFIED = 0;
+        SUB_CODE_TYPE_00 = 1;
+        SUB_CODE_TYPE_01 = 2;
+        SUB_CODE_TYPE_02 = 3;
+        SUB_CODE_TYPE_03 = 4;
+        SUB_CODE_TYPE_04 = 5;
+        SUB_CODE_TYPE_05 = 6;
+        SUB_CODE_TYPE_06 = 7;
+        SUB_CODE_TYPE_07 = 8;
+    }
+    SubCodeType sub_code_type = 5; // This shows the `sub_code` data format.
+
+    string sub_code_text = 6; // This shows the `sub_code` as string.
+    string date = 7; // This shows the date when the error is given. The format is `yyyy/mm/dd hh:mm:ss`.
+}
+
+message GetAlarmErrorResponse {
+    Timestamp timestamp = 1;
+    repeated Error errors = 2;
+    repeated Alarm alarms = 3;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 4;
+}
+
+message GetAlarmErrorStatusRequest {
+    // empty
+}
+
+message GetAlarmErrorStatusResponse {
+    Timestamp timestamp = 1;
+
+    enum ErrorStatus {
+        ERROR_STATUS_UNSPECIFIED = 0;
+        ERROR_STATUS_NO_ERROR = 1;
+        ERROR_STATUS_OCCURRING_ERROR = 2;
+    }
+    ErrorStatus error_status = 2;
+
+    enum AlarmStatus {
+        ALARM_STATUS_UNSPECIFIED = 0;
+        ALARM_STATUS_NO_ALARM = 1;
+        ALARM_STATUS_OCCURRING_ALARM = 2;
+    }
+    AlarmStatus alarm_status = 3;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 4;
+}
+
+message ClearAlarmErrorRequest {
+    // empty
+}
+
+message ClearAlarmErrorResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 2;
+}
+
+message SetAlarmRequest {
+    uint32 alarm_code = 1; /* 8000 ~ 8999 */
+    string alarm_message = 2; /* MAX 32 bytes. If you enter over 33 bytes, characters after 33rd byte are ignored. */
+    uint32 sub_code = 3; /* 0 ~ 255 */
+}
+
+message SetAlarmResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_ALMCODE_OUTRNG = 3;
+        STATUS_SUBCODE_OUTRNG = 4;
+    }
+    Status status = 2;
+}

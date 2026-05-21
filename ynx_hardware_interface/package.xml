@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>ynx_hardware_interface</name>
+  <version>0.0.1</version>
+  <description>gRPC-based ros2_control hardware interface for Yaskawa YNX</description>
+  <maintainer email="alexander@minor.pw">Alexander Minor</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp_lifecycle</depend>
+
+  <build_depend>protobuf-compiler-grpc</build_depend>
+  <depend>protobuf-dev</depend>
+  <depend>libgrpc</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

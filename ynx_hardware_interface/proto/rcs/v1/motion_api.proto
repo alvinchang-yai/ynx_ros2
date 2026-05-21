@@ -1,0 +1,500 @@
+/**
+ * Copyright (c) 2022 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - Motion control related APIs
+ *
+ * This file provides motion control related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+import "rcs/v1/position_types.proto";
+
+/**
+ * `ServoPowerControl` service provides a way to control a servo power enable or disable.
+ *
+ * [ERRORS]
+ * - See the status defined in each response message.
+ */
+service ServoPowerControlService {
+    // Enable servo power of the robots connected the controller.
+    // Return the error if the condition for servo on is not satisfied.
+    rpc PowerOnServos(PowerOnServosRequest) returns (PowerOnServosResponse);
+    // Disable servo power of the robots connected the controller.
+    rpc PowerOffServos(PowerOffServosRequest) returns (PowerOffServosResponse);
+}
+
+/**
+ * `TargetControl` service provides a way to send `Target` in runtime
+ * and get the status of the `Target`. This service also control `Target` for multiple robots.
+ * The server have a queue of target. If target queue is full, return the call immediately as error.
+ * A robot does not start moving by sending targets by this service. Please call `StartMotion()` in `Motion Control` service then the robot will start moving towards the targets.
+ *
+ * [ERRORS]
+ * - See the status defined in each response message.
+ */
+service TargetControlService {
+    // Sends a target position and motion attributes for joint motion. Returns the `target id` to trace the motion.
+    rpc SendJointMotionTarget(SendJointMotionTargetRequest) returns (SendJointMotionTargetResponse);
+    // Sends a target position and motion attributes for linear motion. Returns the `target id` to trace the motion.
+    rpc SendLinearMotionTarget(SendLinearMotionTargetRequest) returns (SendLinearMotionTargetResponse);
+    // Clear the `Target`s in the queue. If `Target`s are cleared in running, the motion will stop immediately.
+    rpc ClearTarget(ClearTargetRequest) returns (ClearTargetResponse);
+    // Get the status of `Target` by `target id`. The status includes running status and progress of the `Target`.
+    rpc ReceiveTarget(ReceiveTargetRequest) returns (ReceiveTargetResponse);
+}
+
+/**
+ * `MotionControl` service provide a way to control motion.
+ * To move the robot, you must send a `Target` using `TargetControl` service in advance
+ * or send a `Target` after `StartMotion()`.
+ * You can also stop the robot motion in running via this service.
+ *
+ * [ERRORS]
+ * - See the status defined in each response message.
+ */
+service MotionControlService {
+    // Allow to start motion as fetching `Targets` queued. Robot continue motion unless the queue becomes empty.
+    // Sending new `Target` after robot stopped due to the queue became empty, robot will start motion again without calling `StartMotion()`.
+    rpc StartMotion(StartMotionRequest) returns (StartMotionResponse);
+    // Stop motion and to execute `Target`s.
+    rpc StopMotion(StopMotionRequest) returns (StopMotionResponse);
+    // Stop motion and the servo power supply is turned OFF. `Target` queue is not cleared.
+    rpc AbortMotion(AbortMotionRequest) returns (AbortMotionResponse);
+}
+
+/**
+ * `IncrementMove` service provides a way to control the robot by putting amount of movement in every interpolation cycle.
+ * This service is useful if you want to move robot in free curved path.
+ *
+ * You can call `StartIncrementMove()` with target group then return a handle.
+ * If the target group is already controlled by other service, an error will be returned.
+ *
+ * The handle will be invalid automatically when below events are happened.
+ *
+ * - The servo power turned off.
+ * - The operation mode TEACH/PLAY is changed.
+ * - Alarms occur.
+ * - Any other event that causes the robots to stop.
+ *
+ * User program needs to get a new handle `StartIncrementMove()` to restart again,
+ * then call `SetIncrementMove()` with the new handle. It is not necessary to call
+ * `StopIncrementMove()` to disable previous handle.
+ *
+ * [ERRORS]
+ * - See the status defined in each response message.
+ */
+service IncrementMoveService {
+    // The robot can be operated by sending incremental values in interpolation cycles.
+    rpc StartIncrementMove(StartIncrementMoveRequest) returns (StartIncrementMoveResponse);
+    // Stop incremental movement of the robot.
+    rpc StopIncrementMove(StopIncrementMoveRequest) returns (StopIncrementMoveResponse);
+    // Set the incremental movement amount for each interpolation cycle for groups.
+    rpc SetIncrementMove(SetIncrementMoveRequest) returns (SetIncrementMoveResponse);
+}
+
+enum SendTargetResponseStatus {
+    SEND_TARGET_RESPONSE_STATUS_UNSPECIFIED = 0;
+    SEND_TARGET_RESPONSE_STATUS_SUCCESS = 1;
+    SEND_TARGET_RESPONSE_STATUS_UNKNOWN_ERROR = 2;
+    SEND_TARGET_RESPONSE_STATUS_NUMBER_OF_TARGETS_EXCEEDED = 3; // The length of `targets` exceeds the the number of configured groups.
+    SEND_TARGET_RESPONSE_STATUS_GROUP_DOES_NOT_EXIST = 4; // Specified value in `group_no` does not exist.
+    SEND_TARGET_RESPONSE_STATUS_TARGETS_GROUP_NO_DUPLICATE = 5; // The `targets` have target including duplicated `group_no`.
+    SEND_TARGET_RESPONSE_STATUS_TARGET_FIELD_ERROR = 6; // `target` field have wrong value.
+    SEND_TARGET_RESPONSE_STATUS_SPEED_FILED_ERROR = 7; // `speed` field have wrong value.
+    SEND_TARGET_RESPONSE_STATUS_SPEED_TYPE_INTERPOLATION_ILLEGAL = 8; // Specified value in `speed` type is not supported with specified `interpolation_type`.
+    SEND_TARGET_RESPONSE_STATUS_SPEED_TYPE_OUTRANGE = 9; // Specified value in `speed` type is not supported.
+    SEND_TARGET_RESPONSE_STATUS_FRAME_AUX_NO_MISSING = 10; // `frame_aux_no` is required for `user` target, but missing.
+    SEND_TARGET_RESPONSE_STATUS_FRAME_AUX_NO_OUTRANGE = 11; // Specified value in `frame_aux_no` is out of range.
+    SEND_TARGET_RESPONSE_STATUS_POS_TYPE_OUTRAGNE = 12; // Specified pos type in `TargetPos` is not supported.
+    SEND_TARGET_RESPONSE_STATUS_TOOL_NO_OUTRANGE = 13; // Specified value in `tool.number` is out of range.
+    SEND_TARGET_RESPONSE_STATUS_BLENDING_TYPE_OUTRANGE = 14; // Specified value in `blending.control` is not supported.
+    SEND_TARGET_RESPONSE_STATUS_ACCELERATION_RATIO_OUTRANGE = 15; // Specified value in `acc.ratio` is out of range.
+    SEND_TARGET_RESPONSE_STATUS_DECELERATION_RATIO_OUTRANGE = 16; // Specified value in `dec.ratio` is out of range.
+    SEND_TARGET_RESPONSE_STATUS_REFERENCE_TYPE_OUTRANGE = 17; // Specified value in `reference.type` is not supported.
+    SEND_TARGET_RESPONSE_STATUS_INTERPOLATION_TYPE_CONFLICT = 20; // Specified value in `interpolation_type` conflicts with other attributes.
+    SEND_TARGET_RESPONSE_STATUS_SYNC_SLAVE_GROUP_TYPE_NOT_SUPPORTED = 21; // Specified group as a slave is unsupported group type for a slave group.
+    SEND_TARGET_RESPONSE_STATUS_SYNC_MASTER_GROUP_TYPE_NOT_SUPPORTED = 22; // Specified group as a master is unsupported group type for a master group.
+    SEND_TARGET_RESPONSE_STATUS_SYNC_MASTER_GROUP_NO_OUTRANGE = 23; // Specified master group number is illegal.
+    SEND_TARGET_RESPONSE_STATUS_TASK_NO_OUTRANGE = 24; // Specified value in `task.number` is out of range.
+    SEND_TARGET_RESPONSE_STATUS_BASE_TARGET_LACK = 25; // `targets` does not include a target for base group.
+    SEND_TARGET_RESPONSE_STATUS_INTERPOLATION_TYPE_ILLEGAL = 26; // Specified `interpolation_type` is not supported for the group specified in `group_no`.
+    SEND_TARGET_RESPONSE_STATUS_SYNC_SLAVE_GROUP_INTERPOLATION_TYPE_NOT_SUPPORTED = 27; // The `interpolation_type` for the slave group is not supported.
+    SEND_TARGET_RESPONSE_STATUS_SYNC_MASTER_GROUP_INTERPOLATION_TYPE_NOT_SUPPORTED = 28; // The `interpolation_type` for the master group is not supported.
+    SEND_TARGET_RESPONSE_STATUS_SYNC_GROUP_EXCEEDED = 29; // Exceeded number of coordinated motion group pair which must be one master and one slave group.
+    SEND_TARGET_RESPONSE_STATUS_SPEED_VALUE_ILLEGAL = 33; // Invalid speed value is specified.
+    SEND_TARGET_RESPONSE_STATUS_TASK_NO_MISSING = 34; // Task number is specified only for some targets. If set task number, task number must be set for all targets.
+    SEND_TARGET_RESPONSE_STATUS_TIMEOUT = 35; // Target send request is not received until timeout.
+    SEND_TARGET_RESPONSE_STATUS_POS_TYPE_NOT_SUPPORTED = 36; // Specified pos type is not supported.
+    SEND_TARGET_RESPONSE_STATUS_SYNC_MASTER_GROUP_LACK = 37; // The master group's target is not included.
+    SEND_TARGET_RESPONSE_STATUS_TIMEOUT_OUTRANGE = 38; // Specified `timeout`` is out of range.
+    SEND_TARGET_RESPONSE_STATUS_BLENDING_TYPE_INTERPOLATION_ILLEGAL = 39; // Specified `BlendingControl` and interpolation type is not suported.
+}
+
+enum ReferenceType {
+    REFERENCE_TYPE_UNSPECIFIED = 0;
+
+    // The target position bases on the origin.
+    // For example, when the each axis target position of the target is 10[deg], the manipulator moves to the position of 10[deg].
+    REFERENCE_TYPE_ABSOLUTE = 1;
+
+    // The target position bases on the start position.
+    // For example, when the each axis target position of the target is 10[deg] and each axis angle is 5[deg], the manipulator moves to the position of 15[deg].
+    REFERENCE_TYPE_RELATIVE = 2;
+}
+
+enum BlendingControl {
+    BLENDING_CONTROL_UNSPECIFIED = 0;
+    BLENDING_CONTROL_DEFAULT = 1;
+    BLENDING_CONTROL_PL = 2;
+    BLENDING_CONTROL_FPL = 3; // Future feature to be supported.
+    BLENDING_CONTROL_PD = 4;  // Future feature to be supported.
+}
+
+message PowerOnServosRequest {
+    // empty
+}
+
+message PowerOnServosResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 2;
+}
+
+message PowerOffServosRequest {
+    // empty
+}
+
+message PowerOffServosResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 2;
+}
+
+message TargetPos {
+
+    oneof pos {
+        PulsePos pulse = 1; // `PULSE` frame target.
+        AxesPos angle = 2; // `ANGLE` frame target.
+        CartesianPos base = 3; // `BASE` frame target.
+        CartesianPos robot = 4; // `ROBOT` frame target.
+        CartesianPos user = 5; // `USER` frame target.
+    }
+
+    // This member is required if you use `user` as the `position`.
+    optional int32 frame_aux_no = 11;
+}
+
+message TaskAttr {
+    int32 number = 1;
+}
+
+message ToolAttr {
+    int32 number = 1;
+}
+
+message JointSpeedAttr {
+    double vj = 1; // [%]
+}
+
+// The slower setting is applied for the motion.
+message LinearSpeedAttr {
+    oneof speed {
+        double v = 1; // [mm/sec]
+        double vr = 2; // [degree/sec]
+    }
+}
+
+message AccAttr {
+    double ratio = 1; // [%]
+}
+
+message DecAttr {
+    double ratio = 1; // [%]
+}
+
+message BlendingAttr {
+    BlendingControl control = 1;
+    double value = 2; // [mm]
+}
+
+message SynchronizationAttr {
+    int32 parent_group_no = 1;
+}
+
+message RelativeAttr {
+    // The `enable_relative` controls the target position is relative or absolute.
+    // True: The target is handled as relative position
+    // False: The target is handled as absolute position.
+    // The relative means the target position bases on the start position.
+    // For example, when the each axis position of the target is 10[deg] and the current angle of each axis is 5[deg], the manipulator moves to 15[deg].
+    // The absolute means the target position bases on the origin.
+    // For example, when the each axis position of the target is 10[deg], the manipulator moves to 10[deg] wherever robot starts at.
+    bool enable_relative = 1;
+}
+
+message SendTargetResult {
+    int32 target_id = 1;
+}
+
+message SendJointMotionTargetRequest {
+    int32 group_no = 1; // The index of control groups for the motion.
+    TargetPos target = 2;
+    JointSpeedAttr speed = 3;
+
+    optional int32 timeout = 9; // The timeout until received by the robot controller. The default is infinite(0xFFFFFFFF). The valid range is 0 ~ 268435455 millliseconds. The negative value is also handled as infinite.
+    optional TaskAttr task = 10; // If not specified, the task number is automatically assigned to be able to run as much as possible in parallel.
+    optional ToolAttr tool = 11; // The default tool number is `0`.
+    optional AccAttr acc = 12; // The acceleration of the motion. The default is `100` %. The min is `20` % and the max is `100` %.
+    optional DecAttr dec = 13; // The deceleration of the motion. The default is `100` %. The min is `20` % and the max is `100` %.
+    optional BlendingAttr blending = 14; // The default control is `BLENDING_DEFAULT` and the distance is as much as possible.
+    optional RelativeAttr relative = 15; // // If not specified, the target position is used as ABSOLUTE position.
+    optional SynchronizationAttr synchronization = 16;
+}
+
+message SendJointMotionTargetResponse {
+    Timestamp timestamp = 1;
+
+    SendTargetResult result = 2;
+
+    SendTargetResponseStatus status = 3;
+}
+
+message SendLinearMotionTargetRequest {
+    int32 group_no = 1; // The index of control groups for the motion.
+    TargetPos target = 2;
+    LinearSpeedAttr speed = 3;
+
+    optional int32 timeout = 9; // The timeout until received by the robot controller. The default is infinite(0xFFFFFFFF). The valid range is 0 ~ 268435455 millliseconds. The negative value is also handled as infinite.
+    optional TaskAttr task = 10; // If not specified, the task number is automatically assigned to be able to run as much as possible in parallel.
+    optional ToolAttr tool = 11; // The default tool number is `0`.
+    optional AccAttr acc = 12; // The acceleration of the motion. The default is `100` %. The min is `20` % and the max is `100` %.
+    optional DecAttr dec = 13; // The deceleration of the motion. The default is `100` %. The min is `20` % and the max is `100` %.
+    optional BlendingAttr blending = 14; // The default control is `BLENDING_DEFAULT` and the distance is as much as possible.
+    optional RelativeAttr relative = 15; // If not specified, the target position is used as ABSOLUTE position.
+    optional SynchronizationAttr synchronization = 16;
+}
+
+message SendLinearMotionTargetResponse {
+    Timestamp timestamp = 1;
+
+    SendTargetResult result = 2;
+
+    SendTargetResponseStatus status = 3;
+}
+
+message ClearTargetRequest {
+    uint32 control_group_bit = 1;
+}
+
+message ClearTargetResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 2;
+}
+
+message ReceiveTargetRequest {
+    uint32 group_no = 1;
+    int32 target_id = 2;
+    int32 timeout = 3;
+}
+
+message ReceiveTargetResponse {
+    Timestamp timestamp = 1;
+
+    enum ReceivedTargetStatus {
+        RECEIVED_TARGET_STATUS_UNSPECIFIED = 0;
+        RECEIVED_TARGET_STATUS_COMPLETE = 1; // The execution of target has been completed.
+        RECEIVED_TARGET_STATUS_INTERRUPTED = 2; // The target have been interrupted.
+    }
+    ReceivedTargetStatus received_target_status = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3; // Specified value in `group_no` does not exist.
+        STATUS_TARGET_RECEIVE_TIMEOUT = 4; // Ended receiving target as timeout.
+    }
+    Status status = 3;
+}
+
+message StartMotionRequest {
+    // empty
+}
+
+message StartMotionResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 2;
+}
+
+message StopMotionRequest {
+    // empty
+}
+
+message StopMotionResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 2;
+}
+
+message AbortMotionRequest {
+    // empty
+}
+
+message AbortMotionResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 2;
+}
+
+message StartIncrementMoveRequest {
+    uint32 control_group_bit = 1; // Specify the control group you want to move by bit. For example, if you want to move group 0 and group 1, please set 0b00000011.
+    optional int32 task_no = 2; // Set `task_no` if you want. If `task_no` is not set, it is determined automatically
+}
+
+message StartIncrementMoveResponse {
+    Timestamp timestamp = 1;
+
+    // The `task_no` is allocated task number in the controller.
+    // The control groups which has different task number can move asynchronously.
+    // This `task_no` will be released when the StopIncrementMove() is called, servo power is disabled and something else.
+    int32 task_no = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3; // Specified control group does not exist.
+        STATUS_TASK_NO_OVER = 4; // The limit of motion parallelization is over.
+        STATUS_COMBO_GROUP_LACK = 5; // If you want to move a robot and it has base, the base group is also specified with the robot group and vice versa.
+        STATUS_GROUP_NO_OVER = 6; // Specified number of control groups is over.
+        STATUS_GROUP_USED = 7; // Specified group has been controlled already by other services or something else.
+        STATUS_GROUP_UNMATCHED = 8; // Specified group has been already started.
+        STATUS_READY_TIMEOUT = 9; // Failed to change state to ready for increment move in a certain time.
+    }
+    Status status = 3;
+}
+
+message StopIncrementMoveRequest {
+    // The `task_no` will be provided by `StartIncrementMove()`.
+    int32 task_no = 1;
+}
+
+message StopIncrementMoveResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_TASK_NO_OVER = 3; // The task number is over the limit.
+    }
+    Status status = 2;
+}
+
+message IncrementMoveGroupRequest {
+    uint32 group_no = 1;
+
+    uint32 tool_no = 2;
+
+    // Incremental value amount for each axis.
+    oneof pos {
+        PulsePos pulse = 3; // Axes position in pulse.
+        AxesPos angle = 4; // Axes position in angle.
+        CartesianPos base = 5; // `BASE` frame position.
+        CartesianPos robot = 6; // `ROBOT` frame position.
+        CartesianPos user = 7; // `USER` frame position.
+    }
+
+    optional uint32 frame_aux_no = 10; // Required if you use `user` as the `pos`.
+
+    message IncrementMoveSync {
+        enum SyncControl {
+            SYNC_CONTROL_UNSPECIFIED = 0;
+            SYNC_CONTROL_DISABLE = 1;
+            SYNC_CONTROL_ENABLE = 2;
+        }
+        SyncControl control = 1;
+        uint32 master_no = 2;
+    };
+    optional IncrementMoveSync sync = 11;
+}
+
+message SetIncrementMoveRequest {
+    int32 task_no = 1;
+
+    int32 timeout = 2;
+
+    repeated IncrementMoveGroupRequest requests = 3;
+}
+
+message SetIncrementMoveResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NUMBER_OF_REQUESTS_OVER = 3; // The number of requests is over than configured groups in robot controller.
+        STATUS_GROUP_DOES_NOT_EXIST = 4; // Specified control group does not exist in the controller.
+        STATUS_GROUP_NO_DUPLICATE = 5; // The `group_no` in the requests are duplicate.
+        STATUS_POS_TYPE_ILLEGAL = 6; // Specified unknown `pos`.
+        STATUS_TASK_NO_OVER = 7; // The task number is over the limit.
+        STATUS_GROUP_DOES_NOT_READY = 8; // The group have not started by `StartIncrementMove()`.
+        STATUS_MASTER_GROUP_DOES_NOT_EXIST = 9; // Specified master group number does not exist in the controller.
+        STATUS_MASTER_GROUP_NOT_READY = 10; // Specified master group have not started `StartIncrementMove()`.
+        STATUS_MASTER_GROUP_TYPE_NOT_SUPPORTED = 11; // Specified master group type is not supported to be master group.
+        STATUS_SLAVE_GROUP_TYPE_NOT_SUPPORTED = 12; // Specified slave group type is not supported to be slave group.
+        STATUS_MASTER_GROUP_SPECIFY_ERROR = 13; // Specified master group was itself. For example, the base group specified its robot group as the master group.
+        STATUS_MULTIPLE_MASTER_GROUP = 14; // Multiple groups were specified as master group.
+        STATUS_MASTER_OR_SLAVE_GROUP_LACK = 15; // Master group or slave group lacked.
+        STATUS_SERVO_POWER_NOT_ENABLED = 16; // The servo power is not enabled.
+        STATUS_ENERGY_SAVING_RECOVERY_ERROR = 17; // Failed to recovery from energy saving mode.
+        STATUS_GROUP_USED = 18; // Specified group has been controlled already by other services or something else.
+        STATUS_TOOL_NO_OUTRANGE = 19; // The tool number is out of range or illegal.
+        STATUS_POS_TYPE_UNSUPPORTED = 20; // The position type is not supported for increment move.
+        STATUS_FRAME_AUX_NO_MISSING = 21; // The frame aux no (ex. user frame number) is not specified.
+        STATUS_FRAME_AUX_NO_OUTRANGE = 22; // The frame aux no (ex. user frame number) is out of range or illegal.
+        STATUS_TIMEOUT = 23; // Execution could not be completed during the specified in `timeout`.
+        STATUS_CALLED_BEFORE_READY = 24; // Called before execution of `StartIncrementMove()` is completed.
+    }
+    Status status = 2;
+}

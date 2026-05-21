@@ -1,0 +1,9 @@
+<library path="ynx_hardware_interface">
+  <class name="ynx_hardware_interface/YnxHardwareInterface" 
+         type="ynx_hardware_interface::YnxHardwareInterface" 
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      gRPC-based Hardware Interface for Yaskawa YNX.
+    </description>
+  </class>
+</library>

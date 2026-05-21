@@ -1,0 +1,15 @@
+/**
+ * Core APIs - type definition
+ *
+ * This file provides timestamp message definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+message Timestamp {
+  // The elapsed time which is from the robot controller have been started up.
+  // The time will be incremented in every I/O cycles in the robot controller.
+  int64 time = 1;
+}

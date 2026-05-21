@@ -1,0 +1,102 @@
+/**
+ * Copyright (c) 2022 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - types definitions
+ *
+ * This file provides the type definitions commonly used for API.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+enum PosType {
+    POS_TYPE_UNSPECIFIED = 0;
+    POS_TYPE_PULSE = 1;
+    POS_TYPE_ANGLE = 2;
+    POS_TYPE_BASE = 3;
+    POS_TYPE_ROBOT = 4;
+    POS_TYPE_USER = 5;
+    POS_TYPE_TOOL = 6;
+}
+
+message PulsePos {
+    repeated int32 pos = 1; // [pulse]
+}
+
+message AxesPos {
+    repeated double pos = 1; // [degree] or [mm]
+}
+
+message Point {
+    double x = 1; // [mm]
+    double y = 2; // [mm]
+    double z = 3; // [mm]
+}
+
+message Euler {
+    double rx = 1; // [degree]
+    double ry = 2; // [degree]
+    double rz = 3; // [degree]
+}
+
+message Frame {
+    Point point = 1;
+    Euler orient = 2;
+}
+
+message CartesianPos {
+    Frame pos = 1;
+    double aux = 2; // aux for redundancy axis.
+    PosConfig pos_config = 3;
+}
+
+message PosConfig {
+    enum Side {
+        SIDE_UNSPECIFIED = 0;
+        SIDE_FRONT = 1;
+        SIDE_BACK = 2;
+    }
+    Side side = 1;
+
+    enum Elbow {
+        ELBOW_UNSPECIFIED = 0;
+        ELBOW_UPPER = 1;
+        ELBOW_LOWER = 2;
+    }
+    Elbow elbow = 2;
+
+    enum Flip {
+        FLIP_UNSPECIFIED = 0;
+        FLIP_FLIP = 1;
+        FLIP_NO_FLIP = 2;
+    }
+    Flip flip = 3;
+
+    enum R180 {
+        R180_UNSPECIFIED = 0;
+        R180_LESS_THAN_180 = 1;
+        R180_GREATER_THAN_OR_EQUAL_180 = 2; // Greater than or equal to 180 degree
+    }
+    R180 r180 = 4;
+
+    enum T180 {
+        T180_UNSPECIFIED = 0;
+        T180_LESS_THAN_180 = 1;
+        T180_GREATER_THAN_OR_EQUAL_180 = 2; // Greater than or equal to 180 degree
+    }
+    T180 t180 = 5;
+
+    enum S180 {
+        S180_UNSPECIFIED = 0;
+        S180_LESS_THAN_180 = 1;
+        S180_GREATER_THAN_OR_EQUAL_180 = 2; // Greater than or equal to 180 degree
+    }
+    S180 s180 = 6;
+
+    bool ex1 = 7;   // ex1 is for redundancy axis or the robot which is not a articulated robot.
+    bool ex2 = 8;   // ex2 is for redundancy axis or the robot which is not a articulated robot.
+}

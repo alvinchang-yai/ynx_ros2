@@ -1,0 +1,84 @@
+/**
+ * Copyright (c) 2023 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - Job control related APIs
+ *
+ * This file provides job control related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+
+/**
+ * `JobControl` service provides a way to control a job on the robot controller.
+ *
+ * [ERRORS]
+ * - See the status defined in each response message.
+ */
+
+service JobControlService {
+    // Job start on the robot controller.
+    rpc JobStart(JobStartRequest) returns (JobStartResponse);
+    // Wait for job end on the robot controller.
+    rpc WaitForJobEnd(WaitForJobEndRequest) returns (WaitForJobEndResponse);
+}
+
+message JobStartRequest {
+    string job_name = 1; // The name of job which you want to start.
+
+     // The line number which you want start from.
+     // Please specify this value 0 if you want to start from the top of the job.
+    int32 line_no = 2;
+}
+
+message JobStartResponse {
+    Timestamp timestamp = 1;
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_ROBOT_MOVING = 3; // The robot is moving.
+        STATUS_HOLD_STATUS = 4; // The robot is holding.
+        STATUS_ALARM_OCCUR = 5; // There is an error or alarm(s).
+        STATUS_SERVO_OFF_STATUS = 6; // The servo is off.
+        STATUS_HOME_POS_UNSETUP = 7; // The origin position has not configured.
+        STATUS_ABSO_OVER = 8; // The feedback position is over the range.
+        STATUS_JOB_NOT_FOUND = 9; // The specified job name is not found.
+        STATUS_AXIS_LIMIT_FUNC_DISABLE = 10; // The axis area limit function is disabled temporary.
+        STATUS_ROBOT_MOTION_AREA_LIMIT_DISABLE = 11; // The robot motion area limit function is disabled temporary.
+        STATUS_TOOL_ANGLE_MONITOR_FUNC_DISABLE = 12; // The tool angle monitor function is disabled temporary.
+        STATUS_TOOL_CHANGE_MONITOR_FUNC_DISABLE = 13; // The tool change monitor function is disabled temporary.
+        STATUS_COAST_DISTANCE_UNSETUP = 14; // The coast distance of the robot has not configured.
+        STATUS_FSU_FLASH_RESET = 15; // The FSU needs to be reset an FLASH data.
+        STATUS_PFL_BUSY = 16; // The PFL status is busy.
+        STATUS_LINE_NO_OUTRANGE = 17; // The specified line number(`line_no`) is out of range of the job lines.
+    }
+    Status status = 2;
+}
+
+message WaitForJobEndRequest {
+    int32 task_no = 1; // The number of task which you want to wait. The range depends configuration.
+    int32 wait_time = 2; // The waiting time until the job ends. The range is 0 - 32767. The `-1` means forever. 
+}
+
+message WaitForJobEndResponse {
+    Timestamp timestamp = 1;
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_HOLD_STATUS = 3; // The robot is holding.
+        STATUS_ALARM_OCCUR = 4; // There is an error or alarm(s).
+        STATUS_SERVO_OFF_STATUS = 5; // The servo is off.
+        STATUS_TIMEOUT = 6; // The waiting timed out or the job is interrupted.
+        STATUS_WAIT_TIME_OUTRANGE = 7; // The specified wait time (`wait_time`) is out of range.
+        STATUS_TASK_NO_OUTRANGE = 8; // The specified task number (`task_no`) is out of range.
+    }
+    Status status = 2;
+}

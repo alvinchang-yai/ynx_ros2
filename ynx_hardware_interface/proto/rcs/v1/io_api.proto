@@ -1,0 +1,127 @@
+/**
+ * Copyright (c) 2022 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - Input/Output signal related APIs
+ *
+ * This file provides input/output signal related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+
+/**
+ * `io` service provides a way to set or get status of the input and output signals in the Robot Controller.
+ * For YRM-RC, since the concurrent I/O scanning cycle is shorter than I/O monitoring cycle,
+ * the status changing of the signal may not be detected even if stream APIs are used.
+ * For example, in the case of monitoring the pulse signal which is changing instantly OFF-ON-OFF,
+ * ON may not be acquired depending on the I/O monitoring timing of the application.
+ * Monitor the signal by adjusting the pulse range or by preparing another signal
+ * to latch the pulse signal.
+ * If you get such a situation, you make the signal latching.
+ *
+ * You will get an error if you set invalid address in requests, however valid requests are processed
+ * successfully unless invalid address appears in the repeated field.
+ * [ERRORS]
+ * - See each response message definitions for RPC specific errors.
+ */
+service IOService {
+    // Get status of input / output.
+    rpc GetIOStatus(GetIOStatusRequest) returns (GetIOStatusResponse);
+    // Get status of input / output by streaming.
+    rpc GetIOStatusStream(GetIOStatusStreamRequest) returns (stream GetIOStatusStreamResponse);
+    // Set status of output
+    rpc SetIOStatus(SetIOStatusRequest) returns (SetIOStatusResponse);
+}
+
+message IOResponse {
+    uint32 value = 1;
+}
+
+//| Possible address  | Description |
+//|---|---|
+//| 10 - 5127         | General input #00010 - #05127   |
+//| 10010 - 15127     | General output #10010 - #15127  |
+//| 20010 - 25127     | External input #20010 - #25127  |
+//| 30010 - 35127     | External output #30010 - #35127 |
+//| 40010 - 41607     | Specific input #40010 - #41607  |
+//| 50010 - 53007     | Specific output #50010 - #53007 |
+//| 60010 - 60647     | Interface panel #60010 - #60647 |
+//| 70010 - 79997     | Auxiliary relay #70010 - #79997 |
+//| 80010 - 80647     | Control input #80010 - #80647   |
+//| 82010 - 82207     | Pseudo input #82010 - #82207    |
+//| 27010 - 29567     | Network input #27010 - #29567   |
+//| 37010 - 39567     | Network output #37010 - #39567  |
+//| 1000000 - 1000999 | Registers #1000000 - #1000999   |
+message GetIOStatusRequest {
+    // Max array size is 253. See above table for the address.
+    repeated uint32 addresses = 1;
+}
+
+message GetIOStatusResponse {
+    Timestamp timestamp = 1;
+    repeated IOResponse io_response = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_ADDRESSES_ARRAY_SIZE_OVER = 3;
+    }
+    Status status = 3;
+}
+
+message GetIOStatusStreamRequest {
+    // Max array size is 253. See above table for the address.
+    repeated uint32 addresses = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetIOStatusStreamResponse {
+    Timestamp timestamp = 1;
+    repeated IOResponse io_response = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_ADDRESSES_ARRAY_SIZE_OVER = 3;
+    }
+    Status status = 3;
+}
+
+//| Possible address  | Description |
+//|---|---|
+//|10010 - 15127     | General output #10010 - #15127  |
+//|60010 - 60647     | Interface panel #60010 - #60647 |
+//|27010 - 29567     | Network input #27010 - #29567   |
+//|1000000 - 1000559 | Registers #1000000 - #1000559   |
+message IORequest {
+    uint32 address = 1; // See above table for the address.
+    uint32 value = 2;
+}
+
+message SetIOStatusRequest {
+    repeated IORequest io_request = 1;
+}
+
+message SetIOStatusResponse {
+    Timestamp timestamp = 1;
+    int32 set_num = 2; // Number of requests successful.
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_ADDRESSES_ARRAY_SIZE_OVER = 3;
+    }
+    Status status = 3;
+}

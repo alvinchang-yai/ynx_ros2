@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="nex10_ros2_control_macro" params="tf_prefix ip port use_mock_hardware:=false">
+    <ros2_control name="nex10_ros2_control" type="system">
+      <hardware>
+        <xacro:if value="${use_mock_hardware}">
+          <plugin>mock_components/GenericSystem</plugin>
+          <param name="calculate_dynamics">true</param>
+        </xacro:if>
+        <xacro:unless value="${use_mock_hardware}">
+          <plugin>ynx_hardware_interface/YnxHardwareInterface</plugin>
+          <param name="ip">${ip}</param>
+          <param name="port">${port}</param>
+        </xacro:unless>
+      </hardware>
+
+      <joint name="${tf_prefix}joint_1">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+      </joint>
+      <joint name="${tf_prefix}joint_2">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+      </joint>
+      <joint name="${tf_prefix}joint_3">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+      </joint>
+      <joint name="${tf_prefix}joint_4">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+      </joint>
+      <joint name="${tf_prefix}joint_5">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+      </joint>
+      <joint name="${tf_prefix}joint_6">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+      </joint>
+
+    </ros2_control>
+  </xacro:macro>
+</robot>

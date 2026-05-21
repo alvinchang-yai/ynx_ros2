@@ -1,0 +1,375 @@
+/**
+ * Copyright (c) 2022 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - Monitor related APIs
+ *
+ * This file provides real-time monitor related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+import "rcs/v1/position_types.proto";
+
+/**
+ * `RealtimeMonitor` service provides a way to monitor values which is send from Robot Controller.
+ * Command : Input data to the motor
+ * Feedback : Output data from the motor
+ *
+ * [ERRORS]
+ * - See each response message definitions for RPC specific errors.
+ */
+service RealtimeMonitorService {
+    // Get current command pulse value by streaming.
+    rpc GetPulseStream(GetPulseStreamRequest) returns (stream GetPulseStreamResponse);
+    // Get current command pulse value once.
+    rpc GetPulse(GetPulseRequest) returns (GetPulseResponse);
+    // Get current command axes position(degree/mm) by streaming.
+    rpc GetAxesPosStream(GetAxesPosStreamRequest) returns (stream GetAxesPosStreamResponse);
+    // Get current command axes position(degree/mm) once.
+    rpc GetAxesPos(GetAxesPosRequest) returns (GetAxesPosResponse);
+    // Get current command cartesian position value by streaming.
+    rpc GetCartesianPosStream(GetCartesianPosStreamRequest) returns (stream GetCartesianPosStreamResponse);
+    // Get current command cartesian position value once.
+    rpc GetCartesianPos(GetCartesianPosRequest) returns (GetCartesianPosResponse);
+    // Get current feedback pulse value by streaming.
+    rpc GetFeedbackPulseStream(GetFeedbackPulseStreamRequest) returns (stream GetFeedbackPulseStreamResponse);
+    // Get current feedback pulse value once.
+    rpc GetFeedbackPulse(GetFeedbackPulseRequest) returns (GetFeedbackPulseResponse);
+    // Get current feedback axes position(degree/mm) by streaming.
+    rpc GetFeedbackAxesPosStream(GetFeedbackAxesPosStreamRequest) returns (stream GetFeedbackAxesPosStreamResponse);
+    // Get current feedback axes position(degree/mm) once.
+    rpc GetFeedbackAxesPos(GetFeedbackAxesPosRequest) returns (GetFeedbackAxesPosResponse);
+    // Get current feedback cartesian position value by streaming.
+    rpc GetFeedbackCartesianPosStream(GetFeedbackCartesianPosStreamRequest) returns (stream GetFeedbackCartesianPosStreamResponse);
+    // Get current feedback cartesian position value once.
+    rpc GetFeedbackCartesianPos(GetFeedbackCartesianPosRequest) returns (GetFeedbackCartesianPosResponse);
+    // Get current feedback torque by streaming.
+    rpc GetFeedbackTorqueStream(GetFeedbackTorqueStreamRequest) returns (stream GetFeedbackTorqueStreamResponse);
+    // Get current feedback torque once.
+    rpc GetFeedbackTorque(GetFeedbackTorqueRequest) returns (GetFeedbackTorqueResponse);
+}
+
+message GetPulseRequest {
+    int32 group_no = 1;
+}
+
+message GetPulseResponse {
+    Timestamp timestamp = 1;
+    PulsePos pulse_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+    }
+    Status status = 3;
+}
+
+message GetPulseStreamRequest {
+    int32 group_no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetPulseStreamResponse {
+    Timestamp timestamp = 1;
+    PulsePos pulse_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+    }
+    Status status = 3;
+}
+
+message GetAxesPosRequest {
+    int32 group_no = 1;
+}
+
+message GetAxesPosResponse {
+    Timestamp timestamp = 1;
+    AxesPos axes_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+    }
+    Status status = 3;
+}
+
+message GetAxesPosStreamRequest {
+    int32 group_no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetAxesPosStreamResponse {
+    Timestamp timestamp = 1;
+    AxesPos axes_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+    }
+    Status status = 3;
+}
+
+message GetCartesianPosRequest {
+    int32 group_no = 1;
+    int32 tool_no = 2;
+    PosType pos_type = 3; // `POS_TYPE_BASE`, `POS_TYPE_ROBOT` and `POS_TYPE_USER` are supported.
+    optional int32 frame_aux_no = 4; // Required if the `pos_type` is `USER` or `TOOL`.
+}
+
+message GetCartesianPosResponse {
+    Timestamp timestamp = 1;
+    CartesianPos cartesian_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+        STATUS_GROUP_TYPE_NOT_SUPPORTED = 4;
+        STATUS_TOOL_NO_OUTRANGE = 5;
+        STATUS_POS_TYPE_UNKNOWN = 6;
+        STATUS_POS_TYPE_UNSUPPORTED = 7;
+        STATUS_FRAME_AUX_NO_MISSING = 8;
+        STATUS_FRAME_AUX_NO_OUTRANGE = 9;
+    }
+    Status status = 3;
+    int32 tool_no = 4;
+}
+
+message GetCartesianPosStreamRequest {
+    int32 group_no = 1;
+    int32 tool_no = 2;
+    PosType pos_type = 3; // `POS_TYPE_BASE`, `POS_TYPE_ROBOT` and `POS_TYPE_USER` are supported.
+    optional int32 frame_aux_no = 4; // Required if the `pos_type` is `USER` or `TOOL`.
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 5;
+}
+
+message GetCartesianPosStreamResponse {
+    Timestamp timestamp = 1;
+    CartesianPos cartesian_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+        STATUS_GROUP_TYPE_NOT_SUPPORTED = 4;
+        STATUS_TOOL_NO_OUTRANGE = 5;
+        STATUS_POS_TYPE_UNKNOWN = 6;
+        STATUS_POS_TYPE_UNSUPPORTED = 7;
+        STATUS_FRAME_AUX_NO_MISSING = 8;
+        STATUS_FRAME_AUX_NO_OUTRANGE = 9;
+    }
+    Status status = 3;
+    int32 tool_no = 4;
+}
+
+message GetFeedbackPulseRequest {
+    int32 group_no = 1;
+}
+
+message GetFeedbackPulseResponse {
+    Timestamp timestamp = 1;
+    PulsePos pulse_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+    }
+    Status status = 3;
+}
+
+message GetFeedbackPulseStreamRequest {
+    int32 group_no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetFeedbackPulseStreamResponse {
+    Timestamp timestamp = 1;
+    PulsePos pulse_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+    }
+    Status status = 3;
+    int32 tool_no = 4;
+}
+
+message GetFeedbackAxesPosRequest {
+    int32 group_no = 1;
+}
+
+message GetFeedbackAxesPosResponse {
+    Timestamp timestamp = 1;
+    AxesPos axes_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+    }
+    Status status = 3;
+}
+
+message GetFeedbackAxesPosStreamRequest {
+    int32 group_no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetFeedbackAxesPosStreamResponse {
+    Timestamp timestamp = 1;
+    AxesPos axes_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+    }
+    Status status = 3;
+}
+
+message GetFeedbackCartesianPosRequest {
+    int32 group_no = 1;
+    int32 tool_no = 2;
+    PosType pos_type = 3; // `POS_TYPE_BASE`, `POS_TYPE_ROBOT` and `POS_TYPE_USER` are supported.
+    optional int32 frame_aux_no = 4; // Required if the `pos_type` is `USER` or `TOOL`.
+}
+
+message GetFeedbackCartesianPosResponse {
+    Timestamp timestamp = 1;
+    CartesianPos cartesian_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+        STATUS_GROUP_TYPE_NOT_SUPPORTED = 4;
+        STATUS_TOOL_NO_OUTRANGE = 5;
+        STATUS_POS_TYPE_UNKNOWN = 6;
+        STATUS_POS_TYPE_UNSUPPORTED = 7;
+        STATUS_FRAME_AUX_NO_MISSING = 8;
+        STATUS_FRAME_AUX_NO_OUTRANGE = 9;
+    }
+    Status status = 3;
+    int32 tool_no = 4;
+}
+
+message GetFeedbackCartesianPosStreamRequest {
+    int32 group_no = 1;
+    int32 tool_no = 2;
+    PosType pos_type = 3; // `POS_TYPE_BASE`, `POS_TYPE_ROBOT` and `POS_TYPE_USER` are supported.
+    optional int32 frame_aux_no = 4; // Required if the `pos_type` is `USER` or `TOOL`.
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 5;
+}
+
+message GetFeedbackCartesianPosStreamResponse {
+    Timestamp timestamp = 1;
+    CartesianPos cartesian_pos = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+        STATUS_GROUP_TYPE_NOT_SUPPORTED = 4;
+        STATUS_TOOL_NO_OUTRANGE = 5;
+        STATUS_POS_TYPE_UNKNOWN = 6;
+        STATUS_POS_TYPE_UNSUPPORTED = 7;
+        STATUS_FRAME_AUX_NO_MISSING = 8;
+        STATUS_FRAME_AUX_NO_OUTRANGE = 9;
+    }
+    Status status = 3;
+    int32 tool_no = 4;
+}
+
+enum TorqueUnitType {
+    TORQUE_UNIT_TYPE_UNSPECIFIED = 0;
+    TORQUE_UNIT_TYPE_PERCENTAGE = 1;         // [%]
+    TORQUE_UNIT_TYPE_NEWTON_METER = 2;       // [Nm]
+}
+
+message GetFeedbackTorqueRequest {
+    int32 group_no = 1;
+    TorqueUnitType unit_type = 2;
+}
+
+message GetFeedbackTorqueResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+        STATUS_UNIT_TYPE_OUTRANGE = 4;
+    }
+    Status status = 2;
+
+    repeated double trq = 3;
+}
+
+message GetFeedbackTorqueStreamRequest {
+    int32 group_no = 1;
+    TorqueUnitType unit_type = 2;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 3;
+}
+
+message GetFeedbackTorqueStreamResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_DOES_NOT_EXIST = 3;
+        STATUS_UNIT_TYPE_OUTRANGE = 4;
+    }
+    Status status = 2;
+
+    repeated double trq = 3;
+}

@@ -1,0 +1,657 @@
+/**
+ * Copyright (c) 2022 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - Variable access related APIs
+ *
+ * This file provides variable access related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+import "rcs/v1/position_types.proto";
+
+/**
+ * `Variable` service provides a way to access variables in the robot controller.
+ *
+ * [ERRORS]
+ * - See the status defined in each response message.
+ */
+service VariableService {
+    // Get a `BYTE` variable in the robot controller.
+    rpc GetByteVariable(GetByteVariableRequest) returns (GetByteVariableResponse);
+    // Get a `BYTE` variable in the robot controller by streaming.
+    rpc GetByteVariableStream(GetByteVariableStreamRequest) returns (stream GetByteVariableStreamResponse);
+    // Get a `INTEGER` variable in the robot controller.
+    rpc GetIntegerVariable(GetIntegerVariableRequest) returns (GetIntegerVariableResponse);
+    // Get a `INTEGER` variable in the robot controller by streaming.
+    rpc GetIntegerVariableStream(GetIntegerVariableStreamRequest) returns (stream GetIntegerVariableStreamResponse);
+    // Get a `DOUBLE` variable in the robot controller.
+    rpc GetDoubleVariable(GetDoubleVariableRequest) returns (GetDoubleVariableResponse);
+    // Get a `DOUBLE` variable in the robot controller by streaming.
+    rpc GetDoubleVariableStream(GetDoubleVariableStreamRequest) returns (stream GetDoubleVariableStreamResponse);
+    // Get a `REAL` variable in the robot controller.
+    rpc GetRealVariable(GetRealVariableRequest) returns (GetRealVariableResponse);
+    // Get a `REAL` variable in the robot controller by streaming.
+    rpc GetRealVariableStream(GetRealVariableStreamRequest) returns (stream GetRealVariableStreamResponse);
+    // Get a `STRING` variable in the robot controller.
+    rpc GetStringVariable(GetStringVariableRequest) returns (GetStringVariableResponse);
+    // Get a `STRING` variable in the robot controller by streaming.
+    rpc GetStringVariableStream(GetStringVariableStreamRequest) returns (stream GetStringVariableStreamResponse);
+    // Get a `POSITION` (robot position) variable in the robot controller.
+    rpc GetRobotPosVariable(GetRobotPosVariableRequest) returns (GetRobotPosVariableResponse);
+    // Get a `POSITION` (robot position) variable in the robot controller by streaming.
+    rpc GetRobotPosVariableStream(GetRobotPosVariableStreamRequest) returns (stream GetRobotPosVariableStreamResponse);
+    // Get a `BP` (base position) variable in the robot controller.
+    rpc GetBasePosVariable(GetBasePosVariableRequest) returns (GetBasePosVariableResponse);
+    // Get a `BP` (base position) variable in the robot controller by streaming.
+    rpc GetBasePosVariableStream(GetBasePosVariableStreamRequest) returns (stream GetBasePosVariableStreamResponse);
+    // Get a `EX` (station position) variable in the robot controller.
+    rpc GetStationPosVariable(GetStationPosVariableRequest) returns (GetStationPosVariableResponse);
+    // Get a `EX` (station position) variable in the robot controller by streaming.
+    rpc GetStationPosVariableStream(GetStationPosVariableStreamRequest) returns (stream GetStationPosVariableStreamResponse);
+    // Get a variable by name in the robot controller.
+    rpc GetVariableByName(GetVariableByNameRequest) returns (GetVariableByNameResponse);
+
+    // Set a `BYTE` variable in the robot controller.
+    rpc SetByteVariable(SetByteVariableRequest) returns (SetByteVariableResponse);
+    // Set a `INTEGER` variable in the robot controller.
+    rpc SetIntegerVariable(SetIntegerVariableRequest) returns (SetIntegerVariableResponse);
+    // Set a `DOUBLE` variable in the robot controller.
+    rpc SetDoubleVariable(SetDoubleVariableRequest) returns (SetDoubleVariableResponse);
+    // Set a `REAL` variable in the robot controller.
+    rpc SetRealVariable(SetRealVariableRequest) returns (SetRealVariableResponse);
+    // Set a `STRING` variable in the robot controller.
+    rpc SetStringVariable(SetStringVariableRequest) returns (SetStringVariableResponse);
+    // Set a `POSITION` (robot position) variable in the robot controller.
+    rpc SetRobotPosVariable(SetRobotPosVariableRequest) returns (SetRobotPosVariableResponse);
+    // Set a `BP` (base position) variable in the robot controller.
+    rpc SetBasePosVariable(SetBasePosVariableRequest) returns (SetBasePosVariableResponse);
+    // Set a `EX` (station position) variable in the robot controller.
+    rpc SetStationPosVariable(SetStationPosVariableRequest) returns (SetStationPosVariableResponse);
+    // Set a variable by name in the robot controller.
+    rpc SetVariableByName(SetVariableByNameRequest) returns (SetVariableByNameResponse);
+}
+
+message GetByteVariableRequest {
+    int32 no = 1;
+}
+
+message GetByteVariableResponse {
+    Timestamp timestamp = 1;
+
+    uint32 value = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED= 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 3;
+}
+
+message GetByteVariableStreamRequest {
+    int32 no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetByteVariableStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+    uint32 value = 3;
+}
+
+message GetIntegerVariableRequest {
+    int32 no = 1;
+}
+
+message GetIntegerVariableResponse {
+    Timestamp timestamp = 1;
+    int32 value = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED= 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 3;
+}
+
+message GetIntegerVariableStreamRequest {
+    int32 no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetIntegerVariableStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+    int32 value = 3;
+}
+
+message GetDoubleVariableRequest {
+    int32 no = 1;
+}
+
+message GetDoubleVariableResponse {
+    Timestamp timestamp = 1;
+
+    int32 value = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED= 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 3;
+}
+
+message GetDoubleVariableStreamRequest {
+    int32 no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetDoubleVariableStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+    int32 value = 3;
+}
+
+message GetRealVariableRequest {
+    int32 no = 1;
+}
+
+message GetRealVariableResponse {
+    Timestamp timestamp = 1;
+
+    float value = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED= 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 3;
+}
+
+message GetRealVariableStreamRequest {
+    int32 no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetRealVariableStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+    float value = 3;
+}
+
+message GetStringVariableRequest {
+    int32 no = 1;
+}
+
+message GetStringVariableResponse {
+    Timestamp timestamp = 1;
+
+    string value = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED= 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 3;
+}
+
+message GetStringVariableStreamRequest {
+    int32 no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetStringVariableStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+    string value = 3;
+}
+
+message GetRobotPosVariableRequest {
+    int32 no = 1;
+}
+
+message GetRobotPosVariableResponse {
+    Timestamp timestamp = 1;
+
+    oneof pos {
+        PulsePos pulse = 2;
+        CartesianPos base = 4;
+        CartesianPos robot = 5;
+        CartesianPos user = 6;
+        CartesianPos tool = 7;
+    }
+
+    // If `pos` is `user`, this member has the index of user frame.
+    int32 frame_aux_no = 10;
+
+    int32 tool_no = 11;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_NOT_INITIALIZED = 4; // Specified variable is not initialized.
+    }
+    Status status = 12;
+}
+
+message GetRobotPosVariableStreamRequest {
+    int32 no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetRobotPosVariableStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_NOT_INITIALIZED = 4; // Specified variable is not initialized.
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+    oneof pos {
+        PulsePos pulse = 3;
+        CartesianPos base = 5;
+        CartesianPos robot = 6;
+        CartesianPos user = 7;
+        CartesianPos tool = 8;
+    }
+
+    // If `pos` is `user`, this member has the index of user frame.
+    int32 frame_aux_no = 10;
+
+    int32 tool_no = 11;
+}
+
+message GetBasePosVariableRequest {
+    int32 no = 1;
+}
+
+message GetBasePosVariableResponse {
+    Timestamp timestamp = 1;
+
+    // The value for invalid axes which are not configured will always be set zero.
+    // For example, when a base is configured as YZ(two axes) and the variable is BASE frame,
+    // the value of X in the variable will always zero.
+    // On the other hand, if the frame of the variable is PULSE, the value which is after the configured axes will be always zero. 
+    // The available axes length in PULSE frame is the max axes number in all base groups.
+    oneof pos {
+        PulsePos pulse = 2;
+        CartesianPos base = 4;
+    }
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_NOT_INITIALIZED = 4; // Specified variable is not initialized.
+    }
+    Status status = 10;
+}
+
+message GetBasePosVariableStreamRequest {
+    int32 no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetBasePosVariableStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_NOT_INITIALIZED = 4; // Specified variable is not initialized.
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+
+    // The value for invalid axes which are not configured will always be set zero.
+    // For example, when a base is configured as YZ(two axes) and the variable is BASE frame,
+    // the value of X in the variable will always zero.
+    // On the other hand, if the frame of the variable is PULSE, the value which is after the configured axes will be always zero. 
+    // The available axes length in PULSE frame is the max axes number in all base groups.
+    oneof pos {
+        PulsePos pulse = 3;
+        CartesianPos base = 5;
+    }
+}
+
+message GetStationPosVariableRequest {
+    int32 no = 1;
+}
+
+message GetStationPosVariableResponse {
+    Timestamp timestamp = 1;
+
+    // The value for invalid axes which are not configured will always be set zero.
+    // For example, when a station have two axes, the value which is after the configured axes will be always zero.
+    // The available axes length in PULSE frame is the max axes number in all station groups.
+    oneof pos {
+        PulsePos pulse = 2;
+    }
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_NOT_INITIALIZED = 4; // Specified variable is not initialized.
+    }
+    Status status = 10;
+}
+
+message GetStationPosVariableStreamRequest {
+    int32 no = 1;
+
+    // The rate decides the response cycle. The unit is Hz and the max is 250 Hz.
+    // The specified rate is rounded depending on the control period of the robot controller.
+    float rate = 2;
+}
+
+message GetStationPosVariableStreamResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_NOT_INITIALIZED = 4; // Specified variable is not initialized.
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+
+    // The value for invalid axes which are not configured will always be set zero.
+    // For example, when a station have two axes, the value which is after the configured axes will be always zero.
+    // The available axes length in PULSE frame is the max axes number in all station groups.
+    oneof pos {
+        PulsePos pulse = 3;
+    }
+}
+
+message GetVariableByNameRequest {
+    string name = 1;
+    int64 size = 2;
+}
+
+message GetVariableByNameResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_SIZE_ERROR = 3;
+        STATUS_VARIABLE_NOT_FOUND = 4;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+
+    bytes data = 3;
+}
+
+message SetByteVariableRequest {
+    int32 no = 1;
+    uint32 value = 2;
+}
+
+message SetByteVariableResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 2;
+}
+
+message SetIntegerVariableRequest {
+    int32 no = 1;
+    int32 value = 2;
+}
+
+message SetIntegerVariableResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 2;
+}
+
+message SetDoubleVariableRequest {
+    int32 no = 1;
+    int32 value = 2;
+}
+
+message SetDoubleVariableResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 2;
+}
+
+message SetRealVariableRequest {
+    int32 no = 1;
+    float value = 2;
+}
+
+message SetRealVariableResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+    }
+    Status status = 2;
+}
+
+message SetStringVariableRequest {
+    int32 no = 1;
+    string value = 2; // The max string length is 48 bytes.
+}
+
+message SetStringVariableResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_STRING_LENGTH_OVER = 4;
+    }
+    Status status = 2;
+}
+
+message SetRobotPosVariableRequest {
+    int32 no = 1;
+
+    oneof pos {
+        PulsePos pulse = 2;
+        CartesianPos base = 4;
+        CartesianPos robot = 5;
+        CartesianPos user = 6;
+        CartesianPos tool = 7;
+    }
+
+     // Required if the `pos` requires additional information.
+     // If the `pos` is `user`, the user frame index is expected.
+    optional int32 frame_aux_no = 10;
+    int32 tool_no = 11;
+}
+
+message SetRobotPosVariableResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_POS_TYPE_UNKNOWN = 4;
+        STATUS_POS_TYPE_UNSUPPORTED = 5;
+        STATUS_TOOL_NO_OUTRANGE = 6;
+        STATUS_FRAME_AUX_NO_MISSING = 7;
+        STATUS_FRAME_AUX_NO_OUTRANGE = 8;
+    }
+    Status status = 2;
+}
+
+message SetBasePosVariableRequest {
+    int32 no = 1;
+
+    // If set the value for not configured axes, the value will be ignored.
+    // The valid axes is united axes in all base groups.
+    // ex.) B1 = (1, 0, 0), B2 = (1, 1, 0) => (1, 1, 0) is valid.
+    oneof pos {
+        PulsePos pulse = 2;
+        CartesianPos base = 4;
+    }
+}
+
+message SetBasePosVariableResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_POS_TYPE_UNKNOWN = 4;
+        STATUS_POS_TYPE_UNSUPPORTED = 5;
+    }
+    Status status = 2;
+}
+
+message SetStationPosVariableRequest {
+    int32 no = 1;
+
+    // If set the value for not configured axes, the value will be ignored.
+    // The valid axes is united axes in all base groups.
+    oneof pos {
+        PulsePos pulse = 2;
+    }
+}
+
+message SetStationPosVariableResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_NO_OUTRANGE = 3;
+        STATUS_POS_TYPE_UNKNOWN = 4;
+        STATUS_POS_TYPE_UNSUPPORTED = 5;
+    }
+    Status status = 2;
+}
+
+message SetVariableByNameRequest {
+    string name = 1;
+    bytes data = 2;
+}
+
+message SetVariableByNameResponse {
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_SIZE_ERROR = 3;
+        STATUS_VARIABLE_NOT_FOUND = 4;
+        STATUS_POS_TYPE_UNSUPPORTED = 5;
+        STATUS_TOOL_NO_OUTRANGE = 6;
+        STATUS_FRAME_AUX_NO_OUTRANGE = 7;
+    }
+    Status status = 1;
+
+    Timestamp timestamp = 2;
+}

@@ -1,0 +1,218 @@
+/**
+ * Copyright (c) 2022 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - System information related APIs
+ *
+ * This file provides system information access related APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+
+/**
+ * `system_info` service provides a way to get the system information and configuration
+ * of the robot controller such as the number of robots, the number of axis and so on.
+ *
+ * [ERRORS]
+ * - See each response message definitions for RPC specific errors.
+ */
+service SystemInfoService {
+    // Get robot controller type and software version.
+    rpc GetFirmwareVersion(GetFirmwareVersionRequest) returns (GetFirmwareVersionResponse);
+    // Get robot controller configuration.
+    rpc GetConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse);
+    // Get robot properties.
+    rpc GetGroupProperties(GetGroupPropertiesRequest) returns (GetGroupPropertiesResponse);
+    // Get calendar information of robot controller
+    rpc GetCalendar(GetCalendarRequest) returns (GetCalendarResponse);
+}
+
+message GetFirmwareVersionRequest {
+    // empty
+}
+
+// The RC version shows robot controller software version.
+message VersionFirmware {
+    // Major version
+    int32 major_version = 1;
+    // Minor version
+    int32 minor_version = 2;
+    // User version
+    int32 user_version = 3;
+    // User code
+    int32 user_code = 4;
+}
+
+message GetFirmwareVersionResponse {
+    // Timestamp
+    Timestamp timestamp = 1;
+
+    // RC firmware version in string.
+    // Parsing this will get the minor version, language, etc.
+    // e.g. YNS1.00.00A(EN)-00
+    string string_version_firmware = 2;
+
+    enum ControllerType {
+        CONTROLLER_TYPE_UNSPECIFIED = 0;
+        // YNX1000 is MOTOMAN NEXT Series controller.
+        CONTROLLER_TYPE_YNX1000 = 1;
+    }
+
+    // The type of controller
+    ControllerType controller_type = 3;
+
+    // Version information
+    VersionFirmware version = 4;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+
+    // Response status
+    Status status = 5;
+}
+
+message GetConfigurationRequest {
+    // empty
+}
+
+message GetConfigurationResponse {
+    // The timestamp
+    Timestamp timestamp = 1;
+
+    // The enabled group bits. The LSB indicates first group.
+    // For example, if the `group_bit` is `3(0b00000011)`, the first group which group number is zero and second group which the group number is one have configured.
+    uint32 group_bit = 2;
+
+    // Total number of enable control groups.
+    int32 group_num = 3;
+
+    // Total number of enable robots.
+    int32 robot_num = 4;
+
+    // Total number of enable bases.
+    int32 base_num = 5;
+
+    // Total number of enable stations.
+    int32 station_num = 6;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 7;
+}
+
+message GetGroupPropertiesRequest {
+    int32 group_no = 1;
+}
+
+message GroupProperties {
+    // The group name
+    string group_name = 1;
+
+    // The type code of group
+    enum GroupType {
+        GROUP_TYPE_UNSPECIFIED = 0;
+        GROUP_TYPE_ROBOT = 1;
+        GROUP_TYPE_BASE = 2;
+        GROUP_TYPE_STATION = 3;
+    }
+    GroupType group_type = 2;
+
+    // The number configured within the group type.
+    // robot_no is the number of robots configured in the system.
+    oneof no {
+        int32 robot_no = 3;
+        int32 base_no = 4;
+        int32 station_no = 5;
+    }
+
+    // The number of axis.
+    int32 axis_num = 6;
+
+    // The axis bit indicates enabled elements within array data. The LSB indicates the first axis, S-axis.
+    // For example, if the `axis_bit` is `(0b00100111)`, the fourth axis(R-axis) and fifth axis(B-axis) are blank in array data.
+    uint32 axis_bit = 7;
+
+    // The axis types.
+    // Note that the size of array is fixed at eight even if the number of axis is less than eight.
+    // You can determine the index of array by using `axis_bit`.
+    // For example, axis_types[0] is `LINEAR`, the first axis is linear axis. And axis_types[2] is `ROTATE`, the third axis is rotate axis.
+
+    // The axis type
+    enum AxisType {
+        AXIS_TYPE_UNSPECIFIED = 0;
+        AXIS_TYPE_UNKNOWN = 1;
+        AXIS_TYPE_ROTATE = 2;
+        AXIS_TYPE_LINEAR = 3;
+    }
+    repeated AxisType axis_types = 8;
+
+    // The max speed for linear motion in mm/sec.
+    double max_linear_speed = 9;
+
+    // The max speed for rotational motion in deg/sec.
+    double max_rotational_speed = 10;
+
+    // The max speed for joint motion.
+    // Note that the size of array is fixed at eight even if the number of axis is less than eight.
+    // You can determine the index of array by using `axis_bit`.
+    // For example, `axis_bit` is `5(0b00000101)` means that max_axis_limits[0] and max_axis_limits[2] are enabled.
+    // You can determine unit of array by using `axis_types`.
+    // The units for each axis are deg/sec for 'ROTATE' and mm/sec for 'LINEAR'.
+    repeated double max_joint_speeds = 11;
+
+    // The max axis limits.
+    // The units for each axis are degree for 'ROTATE' and mm for 'LINEAR'.
+    repeated double max_axis_limits = 12;
+
+    // The min axis limits.
+    repeated double min_axis_limits = 13;
+}
+
+message GetGroupPropertiesResponse {
+    Timestamp timestamp = 1;
+
+    GroupProperties properties = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_GROUP_NO_OUTRANGE = 3;
+    }
+    Status status = 3;
+}
+
+message GetCalendarRequest {
+    // nothing
+}
+
+message GetCalendarResponse {
+    Timestamp timestamp = 1;
+
+    int32 year = 2;
+    int32 month = 3;
+    int32 day = 4;
+    int32 hour = 5;
+    int32 minute = 6;
+    int32 second = 7;
+    int32 millisecond = 8;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+    }
+    Status status = 9;
+}

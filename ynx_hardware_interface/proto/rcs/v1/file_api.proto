@@ -1,0 +1,299 @@
+/**
+ * Copyright (c) 2022 YASKAWA ELECTRIC Corp. ALL right reserved.
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable YASKAWA ELECTRIC license agreement.
+ *
+ * Core APIs - File Access APIs
+ *
+ * This file provides file access APIs definitions.
+ */
+
+syntax = "proto3";
+
+package rcs.v1;
+
+import "rcs/v1/timestamp.proto";
+import "rcs/v1/position_types.proto";
+
+/**
+ * `FileAccess` service provides a way to read/write files which are in the robot controller.
+ * This service supports following file types.
+ *  - Tool file
+ *  - User coordinate file
+ *  - Interference area file
+ *
+ * [ERRORS]
+ * - See each response message definitions for RPC specific errors.
+ */
+service FileAccessService {
+    // Read tool coordinate and load info from the robot controller.
+    rpc ReadTool(ReadToolRequest) returns (ReadToolResponse);
+    // Read tool coordinate from the robot controller.
+    rpc ReadToolCenterPoint(ReadToolCenterPointRequest) returns (ReadToolCenterPointResponse);
+    // Read tool load from the robot controller.
+    rpc ReadToolLoad(ReadToolLoadRequest) returns (ReadToolLoadResponse);
+
+    // Read a user frame file from the robot controller.
+    rpc ReadUserFrame(ReadUserFrameRequest) returns (ReadUserFrameResponse);
+    // Write a user frame file to the robot controller.
+    rpc WriteUserFrame(WriteUserFrameRequest) returns (WriteUserFrameResponse);
+
+    // Read a interference area file from the robot controller.
+    rpc ReadInterferenceArea(ReadInterferenceAreaRequest) returns (ReadInterferenceAreaResponse);
+    // Write a interference area file to the robot controller.
+    rpc WriteInterferenceArea(WriteInterferenceAreaRequest) returns (WriteInterferenceAreaResponse);
+    // Clear a interference area file in the robot controller.
+    rpc ClearInterferenceArea(ClearInterferenceAreaRequest) returns (ClearInterferenceAreaResponse);
+}
+
+message Inertia {
+    float ix = 1; // [kgm^2]
+    float iy = 2; // [kgm^2]
+    float iz = 3; // [kgm^2]
+}
+
+message Load {
+    float mass = 1; // [kg]
+    Point cog = 2; // Center of gravity
+    Inertia inertia = 3; // Moment of inertia
+}
+
+message ReadToolRequest {
+    uint32 file_no = 1;
+}
+
+message ReadToolResponse {
+    Timestamp timestamp = 1;
+
+    Frame flange_to_tcp = 2;
+    Load load = 3;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_FILE_NO_OUTRANGE = 3;
+    }
+    Status status = 4;
+}
+
+message ReadToolCenterPointRequest {
+    uint32 file_no = 1;
+}
+
+message ReadToolCenterPointResponse {
+    Timestamp timestamp = 1;
+
+    Frame flange_to_tcp = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_FILE_NO_OUTRANGE = 3;
+    }
+    Status status = 3;
+}
+
+message ReadToolLoadRequest {
+    uint32 file_no = 1;
+}
+
+message ReadToolLoadResponse {
+    Timestamp timestamp = 1;
+
+    Load load = 2;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_FILE_NO_OUTRANGE = 3;
+    }
+    Status status = 3;
+}
+
+message ReadUserFrameRequest {
+    int32 file_no = 1;
+}
+
+message ReadUserFrameResponse {
+    Timestamp timestamp = 1;
+
+    int32 group_no = 2;
+    string name = 3; // Not supported.
+
+    Frame coordinate = 4;
+
+    PosType parent_pos_type = 5;
+    int32 frame_aux_no = 6; // The value is stored if the `parent_frame` is `USER`.
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_FILE_NO_OUTRANGE = 3;
+        STATUS_NOT_INITIALIZED = 4;
+    }
+    Status status = 7;
+}
+
+message WriteUserFrameRequest {
+    int32 file_no = 1;
+
+    int32 group_no = 2; // The robot group is only supported.
+    string name = 3; // Not Supported.
+    Frame coordinate = 4;
+
+    PosType parent_pos_type = 5; // `POS_TYPE_BASE` and `POS_TYPE_USER` are only supported.
+    optional int32 frame_aux_no = 6; // This is required if the `parent_pos_type` is `POS_TYPE_USER`.
+}
+
+message WriteUserFrameResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_FILE_NO_OUTRANGE = 3;
+        STATUS_GROUP_DOES_NOT_EXIST = 4;
+        STATUS_GROUP_TYPE_NOT_SUPPORTED = 5;
+        STATUS_PARENT_POS_TYPE_NOT_SUPPORTED = 6;
+        STATUS_FRAME_AUX_NO_MISSING = 7;
+        STATUS_FRAME_AUX_NO_OUTRANGE = 8;
+        STATUS_IN_MOTION = 9; // Writing while any of the control groups are in motion is not supported.
+    }
+    Status status = 2;
+}
+
+message ReadInterferenceAreaRequest {
+    uint32 file_no = 1;
+}
+
+enum CheckingType {
+    CHECKING_TYPE_UNSPECIFIED = 0;
+    CHECKING_TYPE_COMMAND = 1;
+    CHECKING_TYPE_FEEDBACK = 2;
+}
+
+enum AlarmMode {
+    ALARM_MODE_UNSPECIFIED = 0;
+    ALARM_MODE_NO_ALARM = 1;
+    ALARM_MODE_ALARM_OUTPUT = 2;
+}
+
+enum MonitorSiteType {
+    MONITOR_SITE_TYPE_UNSPECIFIED = 0;
+    MONITOR_SITE_TYPE_TCP = 1; // checking against for TCP
+    MONITOR_SITE_TYPE_ALL = 2; // checking against for whole body of the robot (required Cube-Arm option)
+}
+
+message AxisInterferenceArea {
+    uint32 group_no = 1;
+    CheckingType checking_type = 2;
+    AlarmMode alarm_mode = 3;
+    string comment = 4; // The MAX length of string is 48 bytes.
+    PulsePos high_limit = 5;
+    PulsePos low_limit = 6;
+}
+
+message CubicInterferenceArea {
+    uint32 group_no = 1;
+    CheckingType checking_type = 2;
+    AlarmMode alarm_mode = 3;
+    string comment = 4; // The MAX length of string is 48 bytes.
+    PosType pos_type = 5; // `POS_TYPE_BASE`, `POS_TYPE_ROBOT` and `POS_TYPE_USER` are supported.
+    uint32 frame_aux_no = 6;
+    MonitorSiteType monitor_site_type = 7;
+    Point high_limit = 8;
+    Point low_limit = 9;
+}
+
+message OutsideCubicInterferenceArea {
+    uint32 group_no = 1;
+    CheckingType checking_type = 2;
+    AlarmMode alarm_mode = 3;
+    string comment = 4; // The MAX length of string is 48 bytes.
+    PosType pos_type = 5; // `POS_TYPE_BASE`, `POS_TYPE_ROBOT` and `POS_TYPE_USER` are supported.
+    uint32 frame_aux_no = 6;
+    MonitorSiteType monitor_site_type = 7;
+    Point high_limit = 8;
+    Point low_limit = 9;
+}
+
+message ReadInterferenceAreaResponse {
+    Timestamp timestamp = 1;
+
+    oneof interference_data {
+        AxisInterferenceArea axis_area = 2;
+        CubicInterferenceArea cubic_area = 3;
+        OutsideCubicInterferenceArea outside_cubic_area = 4;
+    }
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_FUNCTION_ENABLE_ERROR = 3;
+        STATUS_FILE_NO_OUTRANGE = 4;
+        STATUS_NOT_INITIALIZED = 5;
+        STATUS_ROBOT_AND_BASE_NOT_SUPPORTED = 6;
+    }
+    Status status = 5;
+}
+
+message WriteInterferenceAreaRequest {
+    uint32 file_no = 1;
+
+    oneof interference_data {
+        AxisInterferenceArea axis_area = 2;
+        CubicInterferenceArea cubic_area = 3;
+        OutsideCubicInterferenceArea outside_cubic_area = 4;
+    }
+}
+
+message WriteInterferenceAreaResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_FUNCTION_ENABLE_ERROR = 3;
+        STATUS_FILE_NO_OUTRANGE = 4;
+        STATUS_INTERFERENCE_TYPE_UNKNOWN = 5;
+        STATUS_INTERFERENCE_NOT_SUPPORTED = 6;
+        STATUS_GROUP_NO_OUTRANGE = 7;
+        STATUS_GROUP_TYPE_ILLEGAL = 8;
+        STATUS_CHECKING_TYPE_UNKNOWN = 9;
+        STATUS_CHECKING_TYPE_NOT_SUPPORTED = 10;
+        STATUS_POS_TYPE_UNKNOWN = 11;
+        STATUS_POS_TYPE_NOT_SUPPORTED = 12;
+        STATUS_FRAME_AUX_NO_MISSING = 13;
+        STATUS_FRAME_AUX_NO_OUTRANGE = 14;
+        STATUS_MONITOR_SITE_TYPE_UNKNOWN = 15;
+        STATUS_MONITOR_SITE_TYPE_NOT_SUPPORTED = 16;
+        STATUS_ALARM_MODE_UNKNOWN = 17;
+        STATUS_ALARM_MODE_NOT_SUPPORTED = 18;
+        STATUS_CUBE_ARM_FUNCTION_DISABLE = 19;
+    }
+    Status status = 2;
+}
+
+message ClearInterferenceAreaRequest {
+    int32 file_no = 1;
+}
+
+message ClearInterferenceAreaResponse {
+    Timestamp timestamp = 1;
+
+    enum Status {
+        STATUS_UNSPECIFIED = 0;
+        STATUS_SUCCESS = 1;
+        STATUS_UNKNOWN_ERROR = 2;
+        STATUS_FILE_NO_OUTRANGE = 3;
+    }
+    Status status = 2;
+}
