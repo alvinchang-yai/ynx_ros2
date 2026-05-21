@@ -1,2 +1,2 @@
-# YNX ROS2 Repositor
+# YNX ROS2
 Documentation to be added soon...
