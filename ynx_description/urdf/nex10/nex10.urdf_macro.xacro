@@ -1,0 +1,226 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="nex10_urdf_macro" params="tf_prefix">
+
+    <!-- Links -->
+    <link name="${tf_prefix}base_link"/>
+    <link name="${tf_prefix}link_0">
+      <visual>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/visual/nex10_link_0.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="0.00000 0.00000 0.00000" rpy="0.00000 0.00000 0.00000"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/collision/nex10_link_0.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="0.00000 0.00000 0.00000" rpy="0.00000 0.00000 0.00000"/>
+      </collision>
+      <inertial>
+        <origin xyz="-0.01198136 -0.000119839 0.10056914" rpy="0 0 0"/>
+        <mass value="11.614652"/>
+        <inertia ixx="0.058778146" ixy="-0.000277637" ixz="-0.00201866" iyy="0.075028225" iyz="-0.000010718461" izz="0.063979727"/>
+      </inertial>
+    </link>
+
+    <link name="${tf_prefix}link_1">
+      <visual>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/visual/nex10_link_1.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="0.00000 0.00000 -0.34000" rpy="0.00000 0.00000 0.00000"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/collision/nex10_link_1.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="0.00000 0.00000 -0.34000" rpy="0.00000 0.00000 0.00000"/>
+      </collision>
+      <inertial>
+        <origin xyz="0.027872731 -0.010899885 -0.037883009" rpy="0 0 0"/>
+        <mass value="14.601211"/>
+        <inertia ixx="0.12940621" ixy="0.0062285841" ixz="-0.0011149618" iyy="0.14728768" iyz="-0.00040799675" izz="0.080226141"/>
+       </inertial>
+    </link>
+
+    <link name="${tf_prefix}link_2">
+      <visual>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/visual/nex10_link_2.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="-0.34000 -0.04000 0.00000" rpy="${pi/2} 0.00000 ${pi/2}"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/collision/nex10_link_2.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="-0.34000 -0.04000 0.00000" rpy="${pi/2} 0.00000 ${pi/2}"/>
+      </collision>
+      <inertial>
+        <origin xyz="0.2484611 0.023415923 0.027537079" rpy="0 0 0"/>
+        <mass value="12.134303"/>
+        <inertia ixx="0.11968487" ixy="-0.076545305" ixz="-0.082199967" iyy="1.2259992" iyz="-0.006486549" izz="1.1844546"/>
+      </inertial>
+    </link>
+
+    <link name="${tf_prefix}link_3">
+      <visual>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/visual/nex10_link_3.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="-0.87000 0.04000 -0.00000" rpy="${-pi/2} -0.00000 ${-pi/2}"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/collision/nex10_link_3.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="-0.87000 0.04000 -0.00000" rpy="${-pi/2} -0.00000 ${-pi/2}"/>
+      </collision>
+      <inertial>
+        <origin xyz="0.020784778 -0.027763654 0.01915227" rpy="0 0 0"/>
+        <mass value="11.575628"/>
+        <inertia ixx="0.076719056" ixy="0.01439633" ixz="-0.00013095882" iyy="0.052912728" iyz="-0.00018457355" izz="0.082735153"/>
+      </inertial>
+    </link>
+
+    <link name="${tf_prefix}link_4">
+      <visual>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/visual/nex10_link_4.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="-0.91000 -0.00000 0.57000" rpy="0.00000 ${pi/2} 0.00000"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/collision/nex10_link_4.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="-0.91000 -0.00000 0.57000" rpy="0.00000 ${pi/2} 0.00000"/>
+      </collision>
+      <inertial>
+        <origin xyz="0.01482369566 0.00032834388 0.09921236" rpy="0 0 0"/>
+        <mass value="6.4670019"/>
+        <inertia ixx="0.331695" ixy="0.000012290258" ixz="-0.00017923527" iyy="0.33131076" iyz="-0.000016232548" izz="0.01604509"/>
+      </inertial>
+    </link>
+
+    <link name="${tf_prefix}link_5">
+      <visual>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/visual/nex10_link_5.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="-0.91000 0.57000 -0.00000" rpy="${-pi/2} 0.00000 ${-pi/2}"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/collision/nex10_link_5.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="-0.91000 0.57000 -0.00000" rpy="${-pi/2} 0.00000 ${-pi/2}"/>
+      </collision>
+      <inertial>
+        <origin xyz="-0.00000070659904 -0.0014020336 0.010049637" rpy="0 0 0"/>
+        <mass value="1.4924486"/>
+        <inertia ixx="0.0016160342" ixy="0.00000031177813" ixz="0.000000038377563" iyy="0.0016047549" iyz="-0.000042378476" izz="0.0013385143"/>
+      </inertial>
+    </link>
+
+    <link name="${tf_prefix}link_6">
+      <visual>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/visual/nex10_link_6.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="0.57000 -0.00000 -0.83000" rpy="0.00000 0.00000 ${pi}"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://ynx_description/meshes/nex10/collision/nex10_link_6.obj" scale="1.00000 1.00000 1.00000"/>
+        </geometry>
+        <origin xyz="0.57000 -0.00000 -0.83000" rpy="0.00000 0.00000 ${pi}"/>
+      </collision>
+      <inertial>
+        <origin xyz="-0.0000073005324 -0.00000099813232 -0.022010615" rpy="0 0 0"/>
+        <mass value="0.67431737"/>
+        <inertia ixx="0.00061684704" ixy="-0.0000001077084" ixz="-0.000000079162174" iyy="0.00069023137" iyz="0.0000000083938401" izz="0.00049323898"/>
+      </inertial>
+    </link>
+
+    <!-- Joints -->
+
+    <joint name="${tf_prefix}base_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="world" />
+      <child link="${tf_prefix}base_link" />
+    </joint>
+
+    <joint name="${tf_prefix}base_link-link_0" type="fixed">
+      <parent link="${tf_prefix}base_link" />
+      <child link="${tf_prefix}link_0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <joint name="${tf_prefix}joint_1" type="revolute">
+      <parent link="${tf_prefix}link_0"/>
+      <child link="${tf_prefix}link_1"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.00000 0.00000 0.34000" rpy="0.00000 0.00000 0.00000"/>
+      <limit lower="${radians(-180)}" upper="${radians(180)}" effort="311.25" velocity="${radians(300)}"/>
+    </joint>
+
+    <joint name="${tf_prefix}joint_2" type="revolute">
+      <parent link="${tf_prefix}link_1"/>
+      <child link="${tf_prefix}link_2"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.04000 0.00000 0.00000" rpy="${-pi/2} ${-pi/2} 0.00000"/>
+      <limit lower="${radians(-100)}" upper="${radians(145)}" effort="494.7" velocity="${radians(250)}"/>
+    </joint>
+
+    <joint name="${tf_prefix}joint_3" type="revolute">
+      <parent link="${tf_prefix}link_2"/>
+      <child link="${tf_prefix}link_3"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.53000 0.00000 -0.00000" rpy="${-pi} 0.00000 0.00000"/>
+      <limit lower="${radians(-70)}" upper="${radians(190)}" effort="219.75" velocity="${radians(340)}"/>
+    </joint>
+
+    <joint name="${tf_prefix}joint_4" type="revolute">
+      <parent link="${tf_prefix}link_3"/>
+      <child link="${tf_prefix}link_4"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.04000 -0.53000 0.00000" rpy="${-pi/2} 0.00000 0.00000"/>
+      <limit lower="${radians(-190)}" upper="${radians(190)}" effort="52" velocity="${radians(500)}"/>
+    </joint>
+
+    <joint name="${tf_prefix}joint_5" type="revolute">
+      <parent link="${tf_prefix}link_4"/>
+      <child link="${tf_prefix}link_5"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.00000 0.00000 0.00000" rpy="${pi/2} 0.00000 0.00000"/>
+      <limit lower="${radians(-45)}" upper="${radians(225)}" effort="35" velocity="${radians(470)}"/>
+    </joint>
+
+    <joint name="${tf_prefix}joint_6" type="revolute">
+      <parent link="${tf_prefix}link_5"/>
+      <child link="${tf_prefix}link_6"/>
+      <axis xyz="0 0 1"/>
+      <origin xyz="-0.08000 0.00000 0.00000" rpy="${pi/2} 0.00000 ${pi/2}"/>
+      <limit lower="${radians(-360)}" upper="${radians(360)}"  effort="20" velocity="${radians(800)}"/>
+    </joint>
+    <!-- end of joint list -->
+
+    <!-- ROS-Industrial 'flange' frame: attachment point for EEF models -->
+    <link name="${tf_prefix}flange"/>
+    <joint name="${tf_prefix}joint_6-flange" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="${tf_prefix}link_6"/>
+      <child link="${tf_prefix}flange"/>
+    </joint>
+
+    <!-- ROS-Industrial 'tool0' frame: all-zeros tool frame -->
+    <link name="${tf_prefix}tool0"/>
+    <joint name="${tf_prefix}flange-tool0" type="fixed">
+      <origin xyz="0 0 0" rpy="${radians(180)} 0 ${radians(90)}"/>
+      <parent link="${tf_prefix}flange"/>
+      <child link="${tf_prefix}tool0"/>
+    </joint>
+  </xacro:macro>
+</robot>

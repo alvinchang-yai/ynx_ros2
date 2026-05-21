@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<robot name="nex10" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="tf_prefix" default="" />
+  <xacro:arg name="use_mock_hardware" default="false" />
+  <xacro:arg name="ip" default="192.168.19.201" />
+  <xacro:arg name="port" default="50300" />
+  <!-- <xacro:arg name="use_ft_sensor" default="false" /> -->
+  <!-- <xacro:arg name="netft_ip" default="192.168.19.210" /> -->
+  <!-- <xacro:arg name="cpf" default="600000" /> -->
+  <!-- <xacro:arg name="cpt" default="1000000" /> -->
+
+  <xacro:include filename="$(find ynx_description)/urdf/nex10/nex10.urdf_macro.xacro" />
+  <xacro:include filename="$(find ynx_hardware_interface)/config/nex10/nex10.ros2_control_macro.xacro" />
+
+  <link name="world" />
+
+  <xacro:nex10_urdf_macro tf_prefix="$(arg tf_prefix)"/>
+  <xacro:nex10_ros2_control_macro tf_prefix="$(arg tf_prefix)" use_mock_hardware="$(arg use_mock_hardware)" ip="$(arg ip)" port="$(arg port)"/>
+
+  <!-- <xacro:if value="$(arg use_ft_sensor)"> -->
+  <!--   <xacro:include filename="$(find netft_hardware_interface)/config/netft.ros2_control_macro.xacro" /> -->
+  <!--   <xacro:netft_ros2_control_macro tf_prefix="$(arg tf_prefix)" netft_ip="$(arg netft_ip)" cpf="$(arg cpf)" cpt="$(arg cpt)"/> -->
+  <!--   <link name="$(arg tf_prefix)ft_sensor"/> -->
+  <!--   <joint name="$(arg tf_prefix)flange-ft_sensor" type="fixed"> -->
+  <!--     <origin xyz="0 0 -0.0382" rpy="${radians(180)} 0 ${radians(0)}"/> -->
+  <!--     <parent link="$(arg tf_prefix)flange"/> -->
+  <!--     <child link="$(arg tf_prefix)ft_sensor"/> -->
+  <!--   </joint> -->
+  <!-- </xacro:if> -->
+</robot>
