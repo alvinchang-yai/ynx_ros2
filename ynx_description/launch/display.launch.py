@@ -66,7 +66,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'model',
             default_value='nex10',
-            description="Type/series of used YNX robot.",
+            description="Type/series of used YNX robot used.",
             choices=[
                 "nex10",
             ],
