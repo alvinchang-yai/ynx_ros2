@@ -1,59 +1,61 @@
-from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, SetLaunchConfiguration
-from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression, Command, FindExecutable
-from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterValue
-from launch_ros.substitutions import FindPackageShare
+from launch.conditions import IfCondition
 from ament_index_python.packages import get_package_share_directory
 import os
 import yaml
-import xacro
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, SetLaunchConfiguration, OpaqueFunction, IncludeLaunchDescription 
+from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterFile
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution, PythonExpression 
+from launch_ros.parameter_descriptions import ParameterValue
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
-def launch_setup(context, *args, **kwargs):
-    ns = context.launch_configurations['ns']
+def launch_setup(context):
+    # Load parameters
     log_level = context.launch_configurations['log_level']
-    tf_prefix = context.launch_configurations["tf_prefix"]
+    ns = context.launch_configurations['ns']
+    tf_prefix = context.launch_configurations['tf_prefix']
+    model = context.launch_configurations['model']
 
+    # print parameters
     print("")
-    print("Starting robot manager with parameters:")
+    print("Starting robot_manager with parameters:")
     print(" log_level:           " + log_level)
     if ns == "":
         print(" ns:                  " + "/")
     else:
-        print(" ns:                  " + ns)
+        print(" ns:                  " + "/" + ns)
+    print(" model:               " + model)
     print("")
 
-    config_package = 'ynx_bringup'
+    # prefix for packages
+    pkg_prefix = "ynx_"
 
-    # Robot Description
-    description_file = PathJoinSubstitution([FindPackageShare("nex10_description"), "urdf", "nex10.xacro"])
-    robot_description_content = Command(
+    # robot description semantic
+    srdf_file_path = PathJoinSubstitution(
+            [FindPackageShare(pkg_prefix+"bringup"), "srdf", model, model+".srdf.xacro"]
+            )
+    srdf_content = Command(
             [
                 PathJoinSubstitution([FindExecutable(name="xacro")]),
                 " ",
-                description_file,
+                srdf_file_path,
                 " ",
                 "tf_prefix:=",
                 tf_prefix,
-                ])
-    robot_description = {
-            "robot_description": ParameterValue(robot_description_content, value_type=str)
-            }
-
-    # SRDF
-    srdf_file_path = os.path.join(get_package_share_directory(config_package), 'srdf', 'nex10.srdf.xacro')
-    srdf_config = xacro.process_file(srdf_file_path, mappings={"tf_prefix": tf_prefix})
-    srdf = {'robot_description_semantic': srdf_config.toxml()}
+                ]
+            )
+    robot_description_semantic = {"robot_description_semantic": ParameterValue(srdf_content, value_type=str)}
 
     # Kinematics
-    kinematics_path = os.path.join(get_package_share_directory(config_package), 'config', 'kinematics.yaml')
+    kinematics_path = os.path.join(get_package_share_directory(pkg_prefix+"bringup"), 'config', 'kinematics.yaml')
     with open(kinematics_path, 'r') as file:
         kinematics_yaml = yaml.safe_load(file)
     kinematics = {'robot_description_kinematics': {f"{tf_prefix}manipulator": kinematics_yaml}}
 
     # Joint Limits (Planning constraints)
-    joint_limits_path = os.path.join(get_package_share_directory(config_package), 'config', 'joint_limits.yaml')
+    joint_limits_path = os.path.join(get_package_share_directory(pkg_prefix+"bringup"), 'config', 'joint_limits.yaml')
     with open(joint_limits_path, 'r') as file:
         joint_limits_yaml = yaml.safe_load(file)
     raw_limits = joint_limits_yaml.get('joint_limits', {})
@@ -63,28 +65,16 @@ def launch_setup(context, *args, **kwargs):
             }
     joint_limits = {'robot_description_planning': {"joint_limits": prefixed_limits}}
 
-    # Moveit Arguments
-    moveit_arguments = {
-        'publish_planning_scene': False,
-        'publish_geometry_updates': False,
-        'publish_state_updates': False,
-        'publish_transforms_updates': False,
-        'publish_robot_description': False,
-        'publish_robot_description_semantic': False,
-    }
-
     # Robot Manager
-    nex10_robot_manager = Node(
-        package='nex10_robot_manager',
-        executable='nex10_robot_manager',
+    ynx_robot_manager = Node(
+        package='ynx_robot_manager',
+        executable='ynx_robot_manager',
         namespace=ns,
         output='screen',
         parameters=[
-            robot_description,
-            srdf,
+            robot_description_semantic,
             kinematics,
             joint_limits,
-            moveit_arguments,
             {
                 'ns': ns,
                 'tf_prefix': tf_prefix,
@@ -97,11 +87,19 @@ def launch_setup(context, *args, **kwargs):
         ]
     )
 
-    return [nex10_robot_manager]
+    return [ynx_robot_manager]
 
 
 def generate_launch_description():
     declared_arguments = []
+    declared_arguments.append(
+            DeclareLaunchArgument(
+                'log_level',
+                default_value='error',
+                description="Log Level to use for all nodes",
+                choices=["info", "debug", "error"],
+                )
+            )
     declared_arguments.append(
             DeclareLaunchArgument(
                 'ns',
@@ -111,14 +109,16 @@ def generate_launch_description():
             )
     declared_arguments.append(
             SetLaunchConfiguration('tf_prefix', PythonExpression(["'", LaunchConfiguration('ns'), "' + '_' if '", LaunchConfiguration('ns'), "' else ''"]))
-    )
+            )
     declared_arguments.append(
             DeclareLaunchArgument(
-                'log_level',
-                default_value='error',
-                description="Log Level to use for all nodes",
-                choices=["info", "debug", "error"],
+                'model',
+                default_value='nex10',
+                description="Type/series of used YNX robot used.",
+                choices=[
+                    "nex10",
+                    ],
                 )
             )
-    
+
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
