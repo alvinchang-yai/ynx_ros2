@@ -12,8 +12,8 @@ namespace ynx_robot_manager
     move_group_->clearPathConstraints();
     std::vector<double> home_positions = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; 
     move_group_->setJointValueTarget(home_positions);
-    move_group_->setMaxVelocityScalingFactor(0.3);
-    move_group_->setMaxAccelerationScalingFactor(0.1);
+    move_group_->setMaxVelocityScalingFactor(velocity_scaling);
+    move_group_->setMaxAccelerationScalingFactor(acceleration_scaling);
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     bool success = (move_group_->plan(my_plan) == moveit::core::MoveItErrorCode::SUCCESS);
     if (!success) {
