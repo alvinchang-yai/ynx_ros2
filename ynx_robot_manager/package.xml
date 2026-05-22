@@ -3,9 +3,9 @@
 <package format="3">
   <name>ynx_robot_manager</name>
   <version>0.0.1</version>
-  <description>MoveIt 2 C++ Implementation for YASKAWA YNX Ynx</description>
+  <description>Robot Manager for Yaskawa YNX</description>
   <maintainer email="alexander@minor.pw">Alexander Minor</maintainer>
-  <license>MIT License</license>
+  <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
