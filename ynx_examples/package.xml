@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>ynx_examples</name>
+  <version>1.0.0</version>
+  <description>Examples for Yaskawa YNX on ROS2</description>
+  <maintainer email="alexander@minor.pw">Alexander Minor</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <depend>ur</depend>
+  <depend>moveit</depend>
+  <depend>moveit_servo</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>xacro</depend>
+  <depend>joint_state_publisher</depend>
+  <depend>ros2_control_cmake</depend>
+  <depend>ros2_control</depend>
+  <depend>ros2_controllers</depend>
+  <depend>ros2controlcli</depend>
+  <depend>tf_transformations</depend>
+  <depend>robot_manager_interfaces</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
