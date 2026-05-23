@@ -41,7 +41,7 @@ def launch_setup(context):
 
     # robot description
     urdf_file_path = PathJoinSubstitution(
-            [FindPackageShare(pkg_prefix+"description"), "urdf", model, model+".xacro"]
+            [FindPackageShare(pkg_prefix+"description"), "urdf", model, model+".urdf.xacro"]
             )
     urdf_content = Command(
             [

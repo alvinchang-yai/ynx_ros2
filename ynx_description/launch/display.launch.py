@@ -14,7 +14,7 @@ def launch_setup(context):
 
     package_name = 'ynx_description'
     package_dir = get_package_share_directory(package_name) 
-    description_file = os.path.join(package_dir, 'urdf', model, model+'.xacro')
+    description_file = os.path.join(package_dir, 'urdf', model, model+'.urdf.xacro')
     robot_description_content = Command(
         [
             PathJoinSubstitution([FindExecutable(name="xacro")]),

@@ -3,6 +3,7 @@
   <xacro:macro name="nex10_urdf_macro" params="tf_prefix">
 
     <!-- Links -->
+    <link name="${tf_prefix}mount_point"/>
     <link name="${tf_prefix}base_link"/>
     <link name="${tf_prefix}link_0">
       <visual>
@@ -148,7 +149,7 @@
 
     <joint name="${tf_prefix}base_joint" type="fixed">
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <parent link="world" />
+      <parent link="${tf_prefix}mount_point" />
       <child link="${tf_prefix}base_link" />
     </joint>
 
