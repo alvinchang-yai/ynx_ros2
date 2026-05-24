@@ -15,7 +15,6 @@ def launch_setup(context):
     # Load parameters
     log_level = context.launch_configurations['log_level']
     ns = context.launch_configurations['ns']
-    tf_prefix = context.launch_configurations['tf_prefix']
     model = context.launch_configurations['model']
     ip = context.launch_configurations['ip']
     port = context.launch_configurations['port']
@@ -140,4 +139,3 @@ def generate_launch_description():
             DeclareLaunchArgument("launch_rviz", default_value="false", description="Launch RViz?"),
             )
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
-
