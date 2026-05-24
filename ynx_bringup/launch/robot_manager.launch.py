@@ -32,6 +32,23 @@ def launch_setup(context):
     # prefix for packages
     pkg_prefix = "ynx_"
 
+    # robot description
+    urdf_file_path = PathJoinSubstitution(
+            [FindPackageShare(pkg_prefix+"description"), "urdf", model, model+".urdf.xacro"]
+            )
+    urdf_content = Command(
+            [
+                PathJoinSubstitution([FindExecutable(name="xacro")]),
+                " ",
+                urdf_file_path,
+                " ",
+                "tf_prefix:=",
+                tf_prefix,
+                ])
+    robot_description = {
+            "robot_description": ParameterValue(urdf_content, value_type=str)
+            }
+
     # robot description semantic
     srdf_file_path = PathJoinSubstitution(
             [FindPackageShare(pkg_prefix+"bringup"), "srdf", model, model+".srdf.xacro"]
@@ -65,6 +82,16 @@ def launch_setup(context):
             }
     joint_limits = {'robot_description_planning': {"joint_limits": prefixed_limits}}
 
+    # Planning Scene Parameters
+    planning_scene_parameters = {
+            "publish_planning_scene": True,
+            "publish_geometry_updates": True,
+            "publish_state_updates": True,
+            "publish_transforms_updates": True,
+            "publish_robot_description": False,
+            "publish_robot_description_semantic": False,
+            }
+
     # Robot Manager
     ynx_robot_manager = Node(
         package='ynx_robot_manager',
@@ -72,9 +99,11 @@ def launch_setup(context):
         namespace=ns,
         output='screen',
         parameters=[
+            robot_description,
             robot_description_semantic,
             kinematics,
             joint_limits,
+            planning_scene_parameters,
             {
                 'ns': ns,
                 'tf_prefix': tf_prefix,

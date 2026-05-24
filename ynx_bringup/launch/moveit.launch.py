@@ -36,6 +36,23 @@ def launch_setup(context):
     # prefix for packages
     pkg_prefix = "ynx_"
 
+    # robot description
+    urdf_file_path = PathJoinSubstitution(
+            [FindPackageShare(pkg_prefix+"description"), "urdf", model, model+".urdf.xacro"]
+            )
+    urdf_content = Command(
+            [
+                PathJoinSubstitution([FindExecutable(name="xacro")]),
+                " ",
+                urdf_file_path,
+                " ",
+                "tf_prefix:=",
+                tf_prefix,
+                ])
+    robot_description = {
+            "robot_description": ParameterValue(urdf_content, value_type=str)
+            }
+
     # robot description semantic
     srdf_file_path = PathJoinSubstitution(
             [FindPackageShare(pkg_prefix+"bringup"), "srdf", model, model+".srdf.xacro"]
@@ -77,6 +94,7 @@ def launch_setup(context):
             "planning_pipelines": {
                 'pipeline_names': ["pilz_industrial_motion_planner"]
                 },
+            "default_planning_pipeline": "pilz_industrial_motion_planner",
             'pilz_industrial_motion_planner': pilz_config_yaml,
             }
 
@@ -90,6 +108,16 @@ def launch_setup(context):
     moveit_controllers_path = os.path.join(get_package_share_directory(pkg_prefix+"bringup"), 'config', 'moveit_controllers.yaml')
     trajectory_execution = ParameterFile(moveit_controllers_path, allow_substs=True)
 
+    # Planning Scene Parameters
+    planning_scene_parameters = {
+            "publish_planning_scene": True,
+            "publish_geometry_updates": True,
+            "publish_state_updates": True,
+            "publish_transforms_updates": True,
+            "publish_robot_description": False,
+            "publish_robot_description_semantic": False,
+            }
+
     # MoveGroup Node
     move_group_node = Node(
             package='moveit_ros_move_group',
@@ -97,12 +125,14 @@ def launch_setup(context):
             namespace=ns,
             output='screen',
             parameters=[
+                robot_description,
                 robot_description_semantic,
                 kinematics,
                 joint_limits,
                 planning_pipeline,
                 cartesian_limits,
                 trajectory_execution,
+                planning_scene_parameters,
                 {'use_sim_time': False} 
                 ],
             arguments=[
@@ -125,6 +155,7 @@ def launch_setup(context):
             namespace=ns,
             condition=IfCondition(launch_servo),
             parameters=[
+                robot_description,
                 robot_description_semantic,
                 kinematics,
                 joint_limits,
@@ -132,6 +163,7 @@ def launch_setup(context):
                 cartesian_limits,
                 trajectory_execution,
                 servo_parameters,
+                planning_scene_parameters,
                 ],
             output="screen",
             arguments=[
@@ -154,7 +186,9 @@ def launch_setup(context):
             output="log",
             arguments=["-d", rviz_config_file, '--ros-args', '--log-level', log_level],
             parameters=[
+                robot_description,
                 robot_description_semantic,
+                planning_scene_parameters,
                 kinematics,
                 {
                     "use_sim_time": False,
