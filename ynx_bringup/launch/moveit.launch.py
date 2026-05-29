@@ -142,7 +142,9 @@ def launch_setup(context):
                 'moveit.moveit.ros.occupancy_map_monitor:=FATAL',
                 '--log-level', 
                 log_level
-                ]
+                ],
+            sigterm_timeout='1.0',
+            sigkill_timeout='1.0'
             )
 
     # Servo
@@ -169,7 +171,9 @@ def launch_setup(context):
                 '--ros-args', 
                 '--log-level', 
                 log_level
-                ]
+                ],
+            sigterm_timeout='1.0',
+            sigkill_timeout='1.0'
             )
 
     # RVIZ
