@@ -19,6 +19,8 @@ def launch_setup(context):
     ip = context.launch_configurations['ip']
     port = context.launch_configurations['port']
     use_mock_hardware = context.launch_configurations["use_mock_hardware"]
+    use_ft_sensor = context.launch_configurations['use_ft_sensor']
+    ft_sensor_ip = context.launch_configurations['ft_sensor_ip']
     launch_rviz = context.launch_configurations["launch_rviz"]
     launch_servo = context.launch_configurations["launch_servo"]
 
@@ -34,6 +36,12 @@ def launch_setup(context):
     print(" ip:                  " + ip)
     print(" port:                " + port)
     print(" use_mock_hardware:   " + use_mock_hardware)
+    if use_mock_hardware == "false":
+        print(" ip:                  " + ip)
+        print(" port:                " + port)
+    print(" use_ft_sensor:       " + use_ft_sensor)
+    if use_ft_sensor == "true":
+        print(" ft_sensor_ip:        " + ft_sensor_ip)
     print(" launch_servo:        " + launch_servo)
     print(" launch_rviz:         " + launch_rviz)
     print("")
@@ -55,6 +63,8 @@ def launch_setup(context):
                 'ip': ip,
                 'port': port,
                 'use_mock_hardware': use_mock_hardware,
+                'use_ft_sensor': use_ft_sensor,
+                'ft_sensor_ip': ft_sensor_ip,
                 }.items()
             )
 
@@ -130,6 +140,20 @@ def generate_launch_description():
                 "use_mock_hardware",
                 default_value="false",
                 description="Start robot with mock hardware mirroring command to its states.",
+                )
+            )
+    declared_arguments.append(
+            DeclareLaunchArgument(
+                "use_ft_sensor", 
+                default_value="true",
+                description="Use the netft force torque sensor."
+                )
+            )
+    declared_arguments.append(
+            DeclareLaunchArgument(
+                "ft_sensor_ip", 
+                default_value="192.168.19.210",
+                description="IP address by which the netft force torque sensor can be reached."
                 )
             )
     declared_arguments.append(

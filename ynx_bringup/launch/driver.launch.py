@@ -15,6 +15,8 @@ def launch_setup(context):
     ip = context.launch_configurations['ip']
     port = context.launch_configurations['port']
     use_mock_hardware = context.launch_configurations['use_mock_hardware']
+    use_ft_sensor = context.launch_configurations['use_ft_sensor']
+    ft_sensor_ip = context.launch_configurations['ft_sensor_ip']
 
     # print parameters
     print("")
@@ -29,6 +31,9 @@ def launch_setup(context):
     if use_mock_hardware == "false":
         print(" ip:                  " + ip)
         print(" port:                " + port)
+    print(" use_ft_sensor:       " + use_ft_sensor)
+    if use_ft_sensor == "true":
+        print(" ft_sensor_ip:        " + ft_sensor_ip)
     print("")
 
     # prefix for packages
@@ -55,6 +60,12 @@ def launch_setup(context):
                 " ",
                 "use_mock_hardware:=",
                 use_mock_hardware,
+                " ",
+                "use_ft_sensor:=",
+                use_ft_sensor,
+                " ",
+                "ft_sensor_ip:=",
+                ft_sensor_ip,
                 ])
     robot_description = {
             "robot_description": ParameterValue(urdf_content, value_type=str)
@@ -112,6 +123,17 @@ def launch_setup(context):
             ]
         ))
 
+    if use_ft_sensor == "true":
+        nodes.append(Node(
+            package="controller_manager",
+            executable="spawner",
+            namespace=ns,
+            arguments=[
+                "force_torque_sensor_broadcaster",
+                "--ros-args", "--log-level", log_level,
+                ]
+            ))
+
     return nodes
 
 def generate_launch_description():
@@ -163,6 +185,20 @@ def generate_launch_description():
                 "use_mock_hardware",
                 default_value="false",
                 description="Start robot with mock hardware mirroring command to its states.",
+                )
+            )
+    declared_arguments.append(
+            DeclareLaunchArgument(
+                "use_ft_sensor", 
+                default_value="true",
+                description="Use the netft force torque sensor."
+                )
+            )
+    declared_arguments.append(
+            DeclareLaunchArgument(
+                "ft_sensor_ip", 
+                default_value="192.168.19.210",
+                description="IP address by which the netft force torque sensor can be reached."
                 )
             )
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])

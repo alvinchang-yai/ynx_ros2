@@ -42,7 +42,7 @@
 /**/force_torque_sensor_broadcaster:
   ros__parameters:
     sensor_name: $(var tf_prefix)ft_sensor
-    frame_id: $(var tf_prefix)ft_sensor
+    frame_id: $(var tf_prefix)ft_frame
     state_interface_names:
       - force.x
       - force.y

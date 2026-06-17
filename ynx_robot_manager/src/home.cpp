@@ -2,7 +2,7 @@
 
 namespace ynx_robot_manager
 {
-  void YnxRobotManager::handle_home_service(
+  void YnxRobotManager::home_service_callback(
       const std::shared_ptr<Home::Request> request,
       std::shared_ptr<Home::Response> response) 
   {

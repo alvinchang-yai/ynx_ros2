@@ -45,10 +45,24 @@ namespace ynx_robot_manager
     service_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     home_service_ = this->create_service<Home>(
         "home",
-        std::bind(&YnxRobotManager::handle_home_service, this, std::placeholders::_1, std::placeholders::_2),
+        std::bind(&YnxRobotManager::home_service_callback, this, std::placeholders::_1, std::placeholders::_2),
         rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile(),
         service_cb_group_
         );
+    // Set Payload Service
+    set_payload_service_ = this->create_service<SetPayload>(
+        "set_payload",
+        std::bind(&YnxRobotManager::set_payload_service_callback, this, std::placeholders::_1, std::placeholders::_2),
+        rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile(),
+        service_cb_group_
+        );
+    // --- FT Publisher ---
+    input_wrench_subscriber_ = this->create_subscription<WrenchStamped>(
+        "force_torque_sensor_broadcaster/wrench", 
+        rclcpp::QoS(10), 
+        std::bind(&YnxRobotManager::input_wrench_subscription_callback_, this, std::placeholders::_1)
+        );
+    wrench_publisher_ = this->create_publisher<WrenchStamped>("wrench", rclcpp::QoS(10));
 
     RCLCPP_INFO(this->get_logger(), "Robot Manager is ready!");
   }
@@ -68,4 +82,3 @@ int main(int argc, char** argv) {
     rclcpp::shutdown();
     return 0;
 }
-
