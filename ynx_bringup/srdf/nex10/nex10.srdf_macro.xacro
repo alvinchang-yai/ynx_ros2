@@ -18,6 +18,7 @@
     <disable_collisions link1="${tf_prefix}link_1" link2="${tf_prefix}link_2" reason="Adjacent" />
     <disable_collisions link1="${tf_prefix}link_1" link2="${tf_prefix}link_3" reason="Never" />
     <disable_collisions link1="${tf_prefix}link_2" link2="${tf_prefix}link_3" reason="Adjacent" />
+    <disable_collisions link1="${tf_prefix}link_2" link2="${tf_prefix}link_4" reason="Never" />
     <disable_collisions link1="${tf_prefix}link_3" link2="${tf_prefix}link_4" reason="Adjacent" />
     <disable_collisions link1="${tf_prefix}link_3" link2="${tf_prefix}link_5" reason="Never" />
     <disable_collisions link1="${tf_prefix}link_3" link2="${tf_prefix}link_6" reason="Never" />
