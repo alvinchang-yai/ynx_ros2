@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:macro name="nex10_ros2_control_macro" params="tf_prefix ip port use_mock_hardware:=false">
-    <ros2_control name="nex10_ros2_control" type="system">
+    <ros2_control name="nex10" type="system">
       <hardware>
         <xacro:if value="${use_mock_hardware}">
           <plugin>mock_components/GenericSystem</plugin>
