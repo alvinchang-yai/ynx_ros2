@@ -123,7 +123,7 @@ def launch_setup(context):
             ]
         ))
 
-    if use_ft_sensor == "true":
+    if use_ft_sensor:
         nodes.append(Node(
             package="controller_manager",
             executable="spawner",
