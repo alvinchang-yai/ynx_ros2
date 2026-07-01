@@ -12,6 +12,7 @@
 #include "robot_manager_interfaces/action/joint_goal.hpp"
 #include "robot_manager_interfaces/action/pose_goal.hpp"
 #include "robot_manager_interfaces/srv/home.hpp"
+#include "robot_manager_interfaces/srv/park.hpp"
 #include "robot_manager_interfaces/srv/set_payload.hpp"
 #include "geometry_msgs/msg/wrench_stamped.hpp"
 
@@ -24,6 +25,7 @@ namespace ynx_robot_manager
       using PoseGoal = robot_manager_interfaces::action::PoseGoal;
       using PoseGoalHandle = rclcpp_action::ServerGoalHandle<PoseGoal>;
       using Home = robot_manager_interfaces::srv::Home;
+      using Park = robot_manager_interfaces::srv::Park;
       using WrenchStamped = geometry_msgs::msg::WrenchStamped;
       using SetPayload = robot_manager_interfaces::srv::SetPayload;
 
@@ -51,6 +53,10 @@ namespace ynx_robot_manager
       // Home Service
       rclcpp::Service<Home>::SharedPtr home_service_;
       void home_service_callback(const std::shared_ptr<Home::Request> request, std::shared_ptr<Home::Response> response);
+
+      // Park Service
+      rclcpp::Service<Park>::SharedPtr park_service_;
+      void park_service_callback(const std::shared_ptr<Park::Request> request, std::shared_ptr<Park::Response> response);
 
       // Set Payload Service
       rclcpp::Service<SetPayload>::SharedPtr set_payload_service_;
