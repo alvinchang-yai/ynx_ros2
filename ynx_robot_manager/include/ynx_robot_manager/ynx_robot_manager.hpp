@@ -14,6 +14,7 @@
 #include "robot_manager_interfaces/srv/home.hpp"
 #include "robot_manager_interfaces/srv/park.hpp"
 #include "robot_manager_interfaces/srv/set_payload.hpp"
+#include "robot_manager_interfaces/srv/set_io.hpp"
 #include "geometry_msgs/msg/wrench_stamped.hpp"
 
 namespace ynx_robot_manager
@@ -28,6 +29,7 @@ namespace ynx_robot_manager
       using Park = robot_manager_interfaces::srv::Park;
       using WrenchStamped = geometry_msgs::msg::WrenchStamped;
       using SetPayload = robot_manager_interfaces::srv::SetPayload;
+      using SetIo = robot_manager_interfaces::srv::SetIo;
 
       YnxRobotManager();
       void setup();
@@ -61,6 +63,10 @@ namespace ynx_robot_manager
       // Set Payload Service
       rclcpp::Service<SetPayload>::SharedPtr set_payload_service_;
       void set_payload_service_callback(const std::shared_ptr<SetPayload::Request> request, std::shared_ptr<SetPayload::Response> response);
+
+      // Set Io Service
+      rclcpp::Service<SetIo>::SharedPtr set_io_service_;
+      void set_io_service_callback(const std::shared_ptr<SetIo::Request> request, std::shared_ptr<SetIo::Response> response);
 
       // Publish ft
       rclcpp::Subscription<WrenchStamped>::SharedPtr input_wrench_subscriber_;

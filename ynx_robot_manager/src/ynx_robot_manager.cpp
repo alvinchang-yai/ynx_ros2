@@ -63,6 +63,13 @@ namespace ynx_robot_manager
         rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile(),
         service_cb_group_
         );
+    // Set Io Service
+    set_io_service_ = this->create_service<SetIo>(
+        "set_io",
+        std::bind(&YnxRobotManager::set_io_service_callback, this, std::placeholders::_1, std::placeholders::_2),
+        rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile(),
+        service_cb_group_
+        );
     // --- FT Publisher ---
     input_wrench_subscriber_ = this->create_subscription<WrenchStamped>(
         "force_torque_sensor_broadcaster/wrench", 

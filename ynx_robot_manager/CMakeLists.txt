@@ -34,6 +34,7 @@ add_executable(
   src/home.cpp
   src/park.cpp
   src/set_payload.cpp
+  src/set_io.cpp
   src/wrench_publisher.cpp
 )
 
