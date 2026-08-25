@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 # Find gRPC and Protobuf
 find_package(Protobuf REQUIRED)
@@ -98,6 +99,7 @@ ament_target_dependencies(${PROJECT_NAME}
   hardware_interface
   pluginlib
   rclcpp_lifecycle
+  sensor_msgs
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -130,6 +132,7 @@ ament_export_dependencies(
   hardware_interface
   pluginlib
   rclcpp_lifecycle
+  sensor_msgs
 )
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})

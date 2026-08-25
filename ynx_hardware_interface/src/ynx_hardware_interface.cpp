@@ -2,6 +2,8 @@
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "pluginlib/class_list_macros.hpp"
 
+#include <chrono>
+
 namespace ynx_hardware_interface
 {
 
@@ -27,6 +29,11 @@ namespace ynx_hardware_interface
     velocity_states_.resize(info_.joints.size(), 0.0);
     position_commands_.resize(info_.joints.size(), 0.0);
     previous_position_commands_.resize(info_.joints.size(), 0.0);
+
+    joint_names_.clear();
+    for (const auto & joint : info_.joints) {
+      joint_names_.push_back(joint.name);
+    }
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -60,6 +67,16 @@ namespace ynx_hardware_interface
     }
 
     RCLCPP_INFO(rclcpp::get_logger("YnxHardwareInterface"), "[CONFIG] Connection established!");
+
+    // Full-rate trajectory streams for plotting commanded vs. actual motion.
+    joint_command_sent_pub_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
+        "~/joint_command_sent", rclcpp::SensorDataQoS());
+    joint_command_pub_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
+        "~/joint_command", rclcpp::SensorDataQoS());
+    joint_command_acu_pub_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
+        "~/joint_command_acu", rclcpp::SensorDataQoS());
+    joint_feedback_pub_ = get_node()->create_publisher<sensor_msgs::msg::JointState>(
+        "~/joint_feedback", rclcpp::SensorDataQoS());
 
     return hardware_interface::CallbackReturn::SUCCESS;
   }
@@ -178,7 +195,7 @@ namespace ynx_hardware_interface
     grpc::ClientContext feedback_context;
     rcs::v1::GetFeedbackAxesPosRequest request;
     rcs::v1::GetFeedbackAxesPosResponse response;
-    request.set_group_no(group_no_); 
+    request.set_group_no(group_no_);
     grpc::Status status = monitor_stub_->GetFeedbackAxesPos(&feedback_context, request, &response);
 
     if (status.ok()) {
@@ -186,7 +203,7 @@ namespace ynx_hardware_interface
         for (uint i = 0; i < info_.joints.size(); i++) {
           // Extract Position
           previous_position_states_[i] = position_states_[i];
-          double joint_pos_degrees = response.axes_pos().pos(i); 
+          double joint_pos_degrees = response.axes_pos().pos(i);
           position_states_[i] = joint_pos_degrees * (M_PI / 180.0);
 
           // Calculate Velocity
@@ -194,15 +211,51 @@ namespace ynx_hardware_interface
             velocity_states_[i] = (position_states_[i] - previous_position_states_[i]) / period.seconds();
           }
         }
+
+        if (joint_feedback_pub_) {
+          sensor_msgs::msg::JointState feedback_msg;
+          feedback_msg.header.stamp = get_clock()->now();
+          feedback_msg.name = joint_names_;
+          feedback_msg.position = position_states_;
+          feedback_msg.velocity = velocity_states_;
+          joint_feedback_pub_->publish(feedback_msg);
+        }
       } else {
-        RCLCPP_ERROR(rclcpp::get_logger("YnxHardwareInterface"), 
+        RCLCPP_ERROR(rclcpp::get_logger("YnxHardwareInterface"),
             "[READ] Robot internal error. Status code: %d", response.status());
         return hardware_interface::return_type::ERROR;
       }
     } else {
-      RCLCPP_ERROR(rclcpp::get_logger("YnxHardwareInterface"), 
+      RCLCPP_ERROR(rclcpp::get_logger("YnxHardwareInterface"),
           "[READ] gRPC Call failed: %s", status.error_message().c_str());
       return hardware_interface::return_type::ERROR;
+    }
+
+    // The ACU's own internal command/setpoint stream (distinct from the
+    // physical feedback above, and from our own record of what we sent in
+    // write()) - purely for recording/plotting, so a failure here is not fatal
+    // to the control loop, unlike the feedback read above.
+    if (joint_command_acu_pub_) {
+      grpc::ClientContext acu_context;
+      rcs::v1::GetAxesPosRequest acu_request;
+      rcs::v1::GetAxesPosResponse acu_response;
+      acu_request.set_group_no(group_no_);
+      grpc::Status acu_status = monitor_stub_->GetAxesPos(&acu_context, acu_request, &acu_response);
+
+      if (acu_status.ok() && acu_response.status() == rcs::v1::GetAxesPosResponse::STATUS_SUCCESS) {
+        sensor_msgs::msg::JointState acu_msg;
+        acu_msg.header.stamp = get_clock()->now();
+        acu_msg.name = joint_names_;
+        acu_msg.position.resize(info_.joints.size());
+        for (uint i = 0; i < info_.joints.size(); i++) {
+          acu_msg.position[i] = acu_response.axes_pos().pos(i) * (M_PI / 180.0);
+        }
+        joint_command_acu_pub_->publish(acu_msg);
+      } else {
+        RCLCPP_WARN_THROTTLE(rclcpp::get_logger("YnxHardwareInterface"), *this->get_clock(), 5000,
+            "[READ] GetAxesPos (ACU command stream) failed - gRPC ok: %d, status: %d",
+            acu_status.ok(), acu_response.status());
+      }
     }
 
     return hardware_interface::return_type::OK;
@@ -232,14 +285,30 @@ namespace ynx_hardware_interface
       angle_pos->add_pos(delta_deg);
     }
 
-    // Send the incremental movement 
+    if (joint_command_sent_pub_) {
+      sensor_msgs::msg::JointState sent_msg;
+      sent_msg.header.stamp = get_clock()->now();
+      sent_msg.name = joint_names_;
+      sent_msg.position = position_commands_;
+      joint_command_sent_pub_->publish(sent_msg);
+    }
+
+    // Send the incremental movement
     grpc::Status status = motion_stub_->SetIncrementMove(&context, req, &res);
 
     if (!status.ok() || res.status() != rcs::v1::SetIncrementMoveResponse::STATUS_SUCCESS) {
-      RCLCPP_ERROR(rclcpp::get_logger("YnxHardwareInterface"), 
-          "[WRITE] Failed to set Increment Move. gRPC ok: %d, Response status: %d", 
+      RCLCPP_ERROR(rclcpp::get_logger("YnxHardwareInterface"),
+          "[WRITE] Failed to set Increment Move. gRPC ok: %d, Response status: %d",
           status.ok(), res.status());
       return hardware_interface::return_type::ERROR;
+    }
+
+    if (joint_command_pub_) {
+      sensor_msgs::msg::JointState command_msg;
+      command_msg.header.stamp = get_clock()->now();
+      command_msg.name = joint_names_;
+      command_msg.position = position_commands_;
+      joint_command_pub_->publish(command_msg);
     }
 
     return hardware_interface::return_type::OK;

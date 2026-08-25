@@ -9,6 +9,7 @@
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/state.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -70,7 +71,7 @@ private:
   std::vector<double> position_states_;
   std::vector<double> previous_position_states_;
   std::vector<double> velocity_states_;
-  
+
   // --- gRPC Objects ---
   std::shared_ptr<grpc::Channel> grpc_channel_;
   std::unique_ptr<rcs::v1::RealtimeMonitorService::Stub> monitor_stub_;
@@ -78,6 +79,25 @@ private:
   std::unique_ptr<rcs::v1::ServoPowerControlService::Stub> servo_stub_;
   std::unique_ptr<rcs::v1::AlarmControlService::Stub> alarm_stub_;
   std::unique_ptr<rcs::v1::SystemInfoService::Stub> system_stub_;
+
+  // --- Full-trajectory recording ---
+  // Streams four checkpoints of every control cycle, for the whole movement, so
+  // they can be recorded (e.g. `ros2 bag record`) and plotted against each other:
+  //   joint_command_sent - the position ros2_control wants, timestamped right
+  //     before it's handed to the gRPC call (what "moveit sent this cycle").
+  //   joint_command      - the same position, timestamped right after the ACU
+  //     acknowledges the gRPC call (what "the ACU received").
+  //   joint_command_acu  - the ACU's own internal command/setpoint stream
+  //     (GetAxesPos), i.e. what the ACU's interpolator is itself currently
+  //     driving toward - distinct from joint_command (our record of what we
+  //     sent) and from joint_feedback (physical encoder readback).
+  //   joint_feedback     - the physical encoder position read back from the ACU
+  //     (GetFeedbackAxesPos).
+  std::vector<std::string> joint_names_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_command_sent_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_command_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_command_acu_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_feedback_pub_;
 };
 
 }  // namespace ynx_hardware_interface

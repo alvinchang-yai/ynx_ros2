@@ -124,7 +124,7 @@ class Move():
         if result.error_code.val != 1:
             self.node.get_logger().error(f'Motion failed with error code: {result.error_code.val}. Aborting script.')
             return
-        self.node.get_logger().info('Step completed successfully.\n')
+        self.node.get_logger().info('Step completed successfully.\n')        
 
 def main(args=None):
     move = Move()
