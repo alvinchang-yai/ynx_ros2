@@ -1,8 +1,12 @@
 #ifndef YNX_HARDWARE_INTERFACE__YNX_HARDWARE_INTERFACE_HPP_
 #define YNX_HARDWARE_INTERFACE__YNX_HARDWARE_INTERFACE_HPP_
 
+#include <atomic>
+#include <chrono>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "hardware_interface/system_interface.hpp"
@@ -98,6 +102,68 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_command_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_command_acu_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_feedback_pub_;
+
+  // --- Async write: coalescing buffer + background sender thread ---
+  // write() only accumulates the commanded delta and returns immediately; a
+  // background thread drains the accumulated delta and does the actual
+  // SetIncrementMove gRPC call, so the RT control loop never blocks on the
+  // network round-trip. See the design plan discussed before implementing this.
+  std::mutex write_mutex_;
+  std::vector<double> pending_delta_rad_;         // accumulated since the last send, protected by write_mutex_
+  std::vector<double> last_commanded_position_rad_;  // snapshot of position_commands_, protected by write_mutex_
+  std::thread write_thread_;
+  std::atomic<bool> write_thread_running_{false};
+  std::atomic<bool> write_fault_{false};
+  int write_fault_count_ = 0;  // background thread only, no cross-thread access
+
+  static constexpr int kMaxConsecutiveWriteFailures = 5;
+
+  void writeSenderLoop();
+
+  // --- Async read: streaming feedback/ACU-setpoint + background alarm polling ---
+  // Mirrors the write-side design: read() only copies cached data and checks
+  // staleness, never blocks on gRPC. Feedback and the ACU-setpoint stream use
+  // persistent server-streaming RPCs (no per-sample handshake); alarms have no
+  // streaming API in the RCS SDK, so they're polled on their own background
+  // thread instead. See the design plan discussed before implementing this.
+  std::mutex feedback_mutex_;
+  std::vector<double> cached_feedback_rad_;
+  std::chrono::steady_clock::time_point cached_feedback_time_;  // monotonic, staleness watchdog only
+  rclcpp::Time cached_feedback_stamp_;  // ROS clock at capture, published as-is so recorded latency isn't inflated by cache age
+  std::mutex feedback_ctx_mutex_;
+  std::shared_ptr<grpc::ClientContext> feedback_stream_ctx_;
+  std::atomic<bool> feedback_thread_running_{false};
+  std::thread feedback_thread_;
+
+  std::mutex acu_mutex_;
+  std::vector<double> cached_acu_rad_;
+  std::chrono::steady_clock::time_point cached_acu_time_;  // monotonic, staleness watchdog only
+  rclcpp::Time cached_acu_stamp_;  // ROS clock at capture, published as-is
+  std::mutex acu_ctx_mutex_;
+  std::shared_ptr<grpc::ClientContext> acu_stream_ctx_;
+  std::atomic<bool> acu_thread_running_{false};
+  std::thread acu_thread_;
+
+  std::mutex alarm_mutex_;
+  std::chrono::steady_clock::time_point last_alarm_check_time_;
+  bool alarm_has_data_ = false;  // true once the poller has completed at least one poll; protected by alarm_mutex_
+  std::atomic<bool> alarm_fault_{false};
+  std::atomic<bool> alarm_thread_running_{false};
+  std::thread alarm_thread_;
+
+  static constexpr double kFeedbackStreamRateHz = 250.0;
+  // Loosened after real-hardware testing: 3x the ~4ms sample interval (12ms) tripped
+  // on ordinary startup/stream jitter (observed 12.8ms), and read() has zero retry
+  // tolerance during normal operation (a single miss deactivates the whole hardware
+  // component), unlike the 5x-retry activation path. 50ms is still a large
+  // improvement over the old synchronous design's effective ~158Hz refresh.
+  static constexpr int kFeedbackStalenessMs = 50;
+  static constexpr int kAlarmPollIntervalMs = 50;
+  static constexpr int kAlarmStalenessMs = 500;    // loosened alongside kFeedbackStalenessMs, same reasoning
+
+  void feedbackStreamLoop();
+  void acuStreamLoop();
+  void alarmPollLoop();
 };
 
 }  // namespace ynx_hardware_interface
