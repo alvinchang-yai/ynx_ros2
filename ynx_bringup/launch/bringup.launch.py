@@ -85,6 +85,8 @@ def launch_setup(context):
                 'log_level': log_level,
                 'ns': ns,
                 'model': model,
+                'ip': ip,
+                'port': port,
                 }.items()
             )
 

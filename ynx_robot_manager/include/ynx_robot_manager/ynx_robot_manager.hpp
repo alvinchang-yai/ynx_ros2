@@ -8,6 +8,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <cmath>
+#include <grpcpp/grpcpp.h>
 
 #include "robot_manager_interfaces/action/joint_goal.hpp"
 #include "robot_manager_interfaces/action/pose_goal.hpp"
@@ -16,6 +17,7 @@
 #include "robot_manager_interfaces/srv/set_payload.hpp"
 #include "robot_manager_interfaces/srv/set_io.hpp"
 #include "geometry_msgs/msg/wrench_stamped.hpp"
+#include "rcs/v1/io_api.grpc.pb.h"
 
 namespace ynx_robot_manager
 {
@@ -67,6 +69,7 @@ namespace ynx_robot_manager
       // Set Io Service
       rclcpp::Service<SetIo>::SharedPtr set_io_service_;
       void set_io_service_callback(const std::shared_ptr<SetIo::Request> request, std::shared_ptr<SetIo::Response> response);
+      std::unique_ptr<rcs::v1::IOService::Stub> io_stub_;
 
       // Publish ft
       rclcpp::Subscription<WrenchStamped>::SharedPtr input_wrench_subscriber_;
@@ -76,6 +79,8 @@ namespace ynx_robot_manager
       // Parameters
       std::string ns_;
       std::string tf_prefix_;
+      std::string ip_;
+      std::string port_;
 
       // MoveIt Variables
       std::string planning_group_;

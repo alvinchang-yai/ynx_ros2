@@ -122,6 +122,12 @@ install(
   DESTINATION include
 )
 
+# Installed so other packages (e.g. ynx_robot_manager) can generate their own stubs
+install(
+  DIRECTORY proto
+  DESTINATION share/${PROJECT_NAME}
+)
+
 install(
     DIRECTORY config
     DESTINATION share/${PROJECT_NAME}

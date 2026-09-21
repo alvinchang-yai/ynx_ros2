@@ -14,6 +14,8 @@ def launch_setup(context):
     ns = context.launch_configurations['ns']
     tf_prefix = context.launch_configurations['tf_prefix']
     model = context.launch_configurations['model']
+    ip = context.launch_configurations['ip']
+    port = context.launch_configurations['port']
 
     # print parameters
     print("")
@@ -24,6 +26,8 @@ def launch_setup(context):
     else:
         print(" ns:                  " + "/" + ns)
     print(" model:               " + model)
+    print(" ip:                  " + ip)
+    print(" port:                " + port)
     print("")
 
     # prefix for packages
@@ -104,6 +108,8 @@ def launch_setup(context):
             {
                 'ns': ns,
                 'tf_prefix': tf_prefix,
+                'ip': ip,
+                'port': port,
             },
         ],
         arguments=[
@@ -143,6 +149,20 @@ def generate_launch_description():
                 choices=[
                     "nex10",
                     ],
+                )
+            )
+    declared_arguments.append(
+            DeclareLaunchArgument(
+                "ip",
+                default_value="192.168.19.201",
+                description="IP address by which the robot can be reached."
+                )
+            )
+    declared_arguments.append(
+            DeclareLaunchArgument(
+                "port",
+                default_value="50300",
+                description="Port by which the robot can be reached."
                 )
             )
     return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])
