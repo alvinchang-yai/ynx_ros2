@@ -27,7 +27,7 @@ def log_result(io, future, state):
 def main(args=None):
     io = Io()
     req = SetIo.Request()
-    req.pin = 1 # 1 for do1
+    req.pin = 1 # digital output pin 1-8
     req.state = 1 # 1 for ON, 0 for OFF
     
     # Send the async request

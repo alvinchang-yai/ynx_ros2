@@ -10,6 +10,44 @@
     force_torque_sensor_broadcaster:
       type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
 
+    gpio_command_controller:
+      type: gpio_controllers/GpioCommandController
+
+/**/gpio_command_controller:
+  ros__parameters:
+    gpios:
+      - gpio_io
+    command_interfaces:
+      gpio_io:
+        interfaces:
+          - digital_output_0
+          - digital_output_1
+          - digital_output_2
+          - digital_output_3
+          - digital_output_4
+          - digital_output_5
+          - digital_output_6
+          - digital_output_7
+    state_interfaces:
+      gpio_io:
+        interfaces:
+          - digital_input_0
+          - digital_input_1
+          - digital_input_2
+          - digital_input_3
+          - digital_input_4
+          - digital_input_5
+          - digital_input_6
+          - digital_input_7
+          - digital_output_0
+          - digital_output_1
+          - digital_output_2
+          - digital_output_3
+          - digital_output_4
+          - digital_output_5
+          - digital_output_6
+          - digital_output_7
+
 /**/joint_trajectory_controller:
   ros__parameters:
     joints:

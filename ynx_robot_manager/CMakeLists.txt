@@ -18,38 +18,12 @@ set(DEPENDENCIES
   robot_manager_interfaces
   std_srvs
   geometry_msgs
+  control_msgs
 )
 
 # Find dependencies
 foreach(Dependency IN ITEMS ${DEPENDENCIES})
   find_package(${Dependency} REQUIRED)
-endforeach()
-
-# gRPC / Protobuf (IO service talks to the robot controller directly)
-find_package(ynx_hardware_interface REQUIRED)
-find_package(Protobuf REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
-
-# Generate only the protos needed for IO from the hardware interface's installed proto dir
-set(PROTO_DIR ${ynx_hardware_interface_DIR}/../proto)
-set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/gen)
-set(RCS_PROTO_NAMES timestamp io_api)
-set(RCS_GEN_SRCS "")
-foreach(NAME IN LISTS RCS_PROTO_NAMES)
-  file(MAKE_DIRECTORY "${PROTO_SRC_DIR}/rcs/v1")
-  set(PROTO_FILE "${PROTO_DIR}/rcs/v1/${NAME}.proto")
-  set(GEN_BASE "${PROTO_SRC_DIR}/rcs/v1/${NAME}")
-  list(APPEND RCS_GEN_SRCS "${GEN_BASE}.pb.cc" "${GEN_BASE}.grpc.pb.cc")
-  add_custom_command(
-    OUTPUT "${GEN_BASE}.pb.cc" "${GEN_BASE}.pb.h" "${GEN_BASE}.grpc.pb.cc" "${GEN_BASE}.grpc.pb.h"
-    COMMAND protobuf::protoc
-    ARGS --grpc_out "${PROTO_SRC_DIR}"
-         --cpp_out "${PROTO_SRC_DIR}"
-         -I "${PROTO_DIR}"
-         --plugin=protoc-gen-grpc="$<TARGET_FILE:gRPC::grpc_cpp_plugin>"
-         "${PROTO_FILE}"
-    DEPENDS "${PROTO_FILE}"
-  )
 endforeach()
 
 # Define the executable
@@ -63,19 +37,16 @@ add_executable(
   src/set_payload.cpp
   src/set_io.cpp
   src/wrench_publisher.cpp
-  ${RCS_GEN_SRCS}
 )
 
 # Add include directories for the executable
 target_include_directories(ynx_robot_manager PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
-  ${PROTO_SRC_DIR}
 )
 
 # Link the libraries
 ament_target_dependencies(ynx_robot_manager ${DEPENDENCIES})
-target_link_libraries(ynx_robot_manager protobuf::libprotobuf gRPC::grpc++)
 ament_export_include_directories(include)
 ament_export_dependencies(${DEPENDENCIES})
 

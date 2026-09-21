@@ -18,11 +18,8 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>robot_manager_interfaces</depend>
-  <depend>ynx_hardware_interface</depend>
+  <depend>control_msgs</depend>
 
-  <build_depend>protobuf-compiler-grpc</build_depend>
-  <depend>protobuf-dev</depend>
-  <depend>libgrpc</depend>
 
   <export>
     <member_of_group>rosidl_interface_packages</member_of_group>

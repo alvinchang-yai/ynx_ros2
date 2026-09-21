@@ -69,7 +69,7 @@ Below is a breakdown of the available example scripts:
 | `joint_goal_example` | Sends a joint goal to the ynx_robot_manager (WARNING: Will move the robot) |
 | `pose_goal_example` | Sends a pose goal to the ynx_robot_manager (WARNING: Will move the robot) |
 | `servo_example` | Sends twists and poses to moveit_servo (WARNING: Will move the robot) |
-| `io_example` | Write the IO of the robot using the `io_and_status_controller`. |
+| `io_example` | Set a digital output (pins 0-7) through the robot manager's `set_io` service, which drives the `gpio_command_controller`. |
 | `move_action_example` | Use move_action interface of the move_group directly and skip ynx_robot_manager |
 
 **Example:**

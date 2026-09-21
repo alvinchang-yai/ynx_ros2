@@ -49,6 +49,7 @@ namespace ynx_hardware_interface
     servo_stub_ = rcs::v1::ServoPowerControlService::NewStub(grpc_channel_);
     alarm_stub_ = rcs::v1::AlarmControlService::NewStub(grpc_channel_);
     system_stub_ = rcs::v1::SystemInfoService::NewStub(grpc_channel_);
+    io_stub_ = rcs::v1::IOService::NewStub(grpc_channel_);
 
     // 2. Perform Connection Check (Handshake)
     grpc::ClientContext context;
@@ -157,6 +158,36 @@ namespace ynx_hardware_interface
     }
     RCLCPP_INFO(rclcpp::get_logger("YnxHardwareInterface"), "[ACTIVATION] States synced succesfully!");
 
+    // Seed the I/O commands from the robot's current output levels so that
+    // activating doesn't turn any output that is currently ON back OFF. This is
+    // a one-off blocking call (activation isn't RT); on failure the commands
+    // stay 0 and nothing is written until a controller commands a change.
+    {
+      std::array<uint32_t, kNumGpio> inputs{};
+      std::array<uint32_t, kNumGpio> outputs{};
+      if (readIoStatus(inputs, outputs)) {
+        std::lock_guard<std::mutex> lock(io_mutex_);
+        io_cached_inputs_ = inputs;
+        io_cached_outputs_ = outputs;
+        io_pending_.fill(-1);
+        for (size_t i = 0; i < kNumGpio; i++) {
+          gpio_input_states_[i] = inputs[i];
+          gpio_output_states_[i] = outputs[i];
+          gpio_output_commands_[i] = outputs[i];
+          io_last_commanded_[i] = outputs[i];
+        }
+        RCLCPP_INFO(rclcpp::get_logger("YnxHardwareInterface"), "[ACTIVATION] I/O states synced successfully!");
+      } else {
+        RCLCPP_WARN(rclcpp::get_logger("YnxHardwareInterface"), "[ACTIVATION] Could not read initial I/O state; outputs will only be written on change.");
+        std::lock_guard<std::mutex> lock(io_mutex_);
+        io_pending_.fill(-1);
+        io_last_commanded_.fill(0.0);
+        gpio_output_commands_.fill(0.0);
+      }
+    }
+    io_thread_running_.store(true);
+    io_thread_ = std::thread(&YnxHardwareInterface::ioLoop, this);
+
     // Start Increment Move
     grpc::ClientContext motion_context;
     rcs::v1::StartIncrementMoveRequest motion_req;
@@ -226,6 +257,13 @@ namespace ynx_hardware_interface
     alarm_thread_running_.store(false);
     if (alarm_thread_.joinable()) {
       alarm_thread_.join();
+    }
+
+    // The I/O thread only makes unary calls with a short deadline, so it exits
+    // promptly once the flag is cleared.
+    io_thread_running_.store(false);
+    if (io_thread_.joinable()) {
+      io_thread_.join();
     }
 
     if (task_no_ >= 0) {
@@ -351,6 +389,18 @@ namespace ynx_hardware_interface
       }
     }
 
+    // I/O levels: best effort, never fails read(). If the I/O thread holds the
+    // lock right now, keep last cycle's values instead of waiting.
+    {
+      std::unique_lock<std::mutex> lock(io_mutex_, std::try_to_lock);
+      if (lock.owns_lock()) {
+        for (size_t i = 0; i < kNumGpio; i++) {
+          gpio_input_states_[i] = io_cached_inputs_[i];
+          gpio_output_states_[i] = io_cached_outputs_[i];
+        }
+      }
+    }
+
     return hardware_interface::return_type::OK;
   }
 
@@ -379,6 +429,21 @@ namespace ynx_hardware_interface
         pending_delta_rad_[i] += delta_rad;
       }
       last_commanded_position_rad_ = position_commands_;
+    }
+
+    // Record output changes for the I/O thread. try_lock: if it is busy, the
+    // change is picked up next cycle (io_last_commanded_ is only updated once
+    // the change was handed over).
+    {
+      std::unique_lock<std::mutex> lock(io_mutex_, std::try_to_lock);
+      if (lock.owns_lock()) {
+        for (size_t i = 0; i < kNumGpio; i++) {
+          if (gpio_output_commands_[i] != io_last_commanded_[i]) {
+            io_pending_[i] = gpio_output_commands_[i] > 0.5 ? 1 : 0;
+            io_last_commanded_[i] = gpio_output_commands_[i];
+          }
+        }
+      }
     }
 
     if (joint_command_sent_pub_) {
@@ -450,6 +515,94 @@ namespace ynx_hardware_interface
         // Avoid hammering a genuinely unreachable ACU in a tight retry loop.
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
+    }
+  }
+
+  bool YnxHardwareInterface::readIoStatus(
+      std::array<uint32_t, kNumGpio> & inputs, std::array<uint32_t, kNumGpio> & outputs) {
+    grpc::ClientContext context;
+    context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(kIoDeadlineMs));
+    rcs::v1::GetIOStatusRequest req;
+    rcs::v1::GetIOStatusResponse res;
+    for (uint32_t i = 0; i < kNumGpio; i++) {
+      req.add_addresses(kGpioInputBaseAddress + i);
+    }
+    for (uint32_t i = 0; i < kNumGpio; i++) {
+      req.add_addresses(kGpioOutputBaseAddress + i);
+    }
+
+    grpc::Status status = io_stub_->GetIOStatus(&context, req, &res);
+    if (!status.ok()) {
+      RCLCPP_WARN_THROTTLE(rclcpp::get_logger("YnxHardwareInterface"), *get_clock(), 2000,
+          "[IO] GetIOStatus gRPC call failed: %s", status.error_message().c_str());
+      return false;
+    }
+    if (res.status() != rcs::v1::GetIOStatusResponse::STATUS_SUCCESS ||
+        res.io_response_size() != static_cast<int>(2 * kNumGpio)) {
+      RCLCPP_WARN_THROTTLE(rclcpp::get_logger("YnxHardwareInterface"), *get_clock(), 2000,
+          "[IO] GetIOStatus returned status %d with %d values (expected %zu).",
+          static_cast<int>(res.status()), res.io_response_size(), 2 * kNumGpio);
+      return false;
+    }
+    for (size_t i = 0; i < kNumGpio; i++) {
+      inputs[i] = res.io_response(static_cast<int>(i)).value();
+      outputs[i] = res.io_response(static_cast<int>(i + kNumGpio)).value();
+    }
+    return true;
+  }
+
+  void YnxHardwareInterface::ioLoop() {
+    while (io_thread_running_.load()) {
+      // 1. Send output changes recorded by write().
+      std::array<int, kNumGpio> to_send;
+      {
+        std::lock_guard<std::mutex> lock(io_mutex_);
+        to_send = io_pending_;
+        io_pending_.fill(-1);
+      }
+
+      rcs::v1::SetIOStatusRequest set_req;
+      for (size_t i = 0; i < kNumGpio; i++) {
+        if (to_send[i] >= 0) {
+          auto * io = set_req.add_io_request();
+          io->set_address(kGpioOutputBaseAddress + static_cast<uint32_t>(i));
+          io->set_value(static_cast<uint32_t>(to_send[i]));
+        }
+      }
+      if (set_req.io_request_size() > 0) {
+        grpc::ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + std::chrono::milliseconds(kIoDeadlineMs));
+        rcs::v1::SetIOStatusResponse set_res;
+        grpc::Status status = io_stub_->SetIOStatus(&context, set_req, &set_res);
+        if (!status.ok()) {
+          RCLCPP_ERROR(rclcpp::get_logger("YnxHardwareInterface"),
+              "[IO] SetIOStatus gRPC call failed: %s - will retry.", status.error_message().c_str());
+          // Transport failure: put the changes back unless a newer command
+          // for the same pin arrived in the meantime.
+          std::lock_guard<std::mutex> lock(io_mutex_);
+          for (size_t i = 0; i < kNumGpio; i++) {
+            if (to_send[i] >= 0 && io_pending_[i] < 0) {
+              io_pending_[i] = to_send[i];
+            }
+          }
+        } else if (set_res.status() != rcs::v1::SetIOStatusResponse::STATUS_SUCCESS) {
+          // The controller rejected it; retrying the same request won't help.
+          RCLCPP_ERROR(rclcpp::get_logger("YnxHardwareInterface"),
+              "[IO] Controller rejected SetIOStatus (status %d, %d of %d applied).",
+              static_cast<int>(set_res.status()), set_res.set_num(), set_req.io_request_size());
+        }
+      }
+
+      // 2. Refresh the cached levels for read().
+      std::array<uint32_t, kNumGpio> inputs{};
+      std::array<uint32_t, kNumGpio> outputs{};
+      if (readIoStatus(inputs, outputs)) {
+        std::lock_guard<std::mutex> lock(io_mutex_);
+        io_cached_inputs_ = inputs;
+        io_cached_outputs_ = outputs;
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(kIoPollIntervalMs));
     }
   }
 
@@ -583,6 +736,10 @@ namespace ynx_hardware_interface
       state_interfaces.emplace_back(hardware_interface::StateInterface(
             info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &velocity_states_[i]));
     }
+    for (size_t i = 0; i < kNumGpio; i++) {
+      state_interfaces.emplace_back("gpio_io", "digital_input_" + std::to_string(i), &gpio_input_states_[i]);
+      state_interfaces.emplace_back("gpio_io", "digital_output_" + std::to_string(i), &gpio_output_states_[i]);
+    }
     return state_interfaces;
   }
 
@@ -591,6 +748,9 @@ namespace ynx_hardware_interface
     for (uint i = 0; i < info_.joints.size(); i++) {
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
             info_.joints[i].name, hardware_interface::HW_IF_POSITION, &position_commands_[i]));
+    }
+    for (size_t i = 0; i < kNumGpio; i++) {
+      command_interfaces.emplace_back("gpio_io", "digital_output_" + std::to_string(i), &gpio_output_commands_[i]);
     }
     return command_interfaces;
   }

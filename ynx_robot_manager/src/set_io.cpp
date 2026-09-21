@@ -10,9 +10,9 @@ namespace ynx_robot_manager
     int pin = request->pin;
     int state = request->state;
 
-    // Pin needs to be in range 0-7
-    if (pin < 0 || pin > 7) {
-      RCLCPP_ERROR(this->get_logger(), "[Set Io Service] Invalid Pin: %d. Needs to be in between 0 and 7.", pin);
+    // Pin needs to be in range 1-8 (pin N maps to the hardware interface's digital_output_(N-1))
+    if (pin < 1 || pin > 8) {
+      RCLCPP_ERROR(this->get_logger(), "[Set Io Service] Invalid Pin: %d. Needs to be in between 1 and 8.", pin);
       response->success = false;
       response->message = "Io update failed: Invalid pin.";
       return;
@@ -23,35 +23,29 @@ namespace ynx_robot_manager
       response->message = "Io update failed: Invalid state.";
       return;
     }
+
+    // Nobody listening means the gpio_command_controller isn't active, so the command would be dropped.
+    if (gpio_command_publisher_->get_subscription_count() == 0) {
+      RCLCPP_ERROR(this->get_logger(), "[Set Io Service] gpio_command_controller is not available.");
+      response->success = false;
+      response->message = "Io update failed: gpio_command_controller is not active.";
+      return;
+    }
+
     RCLCPP_INFO(this->get_logger(), "[Set Io Service] Attempting to set io - Pin: %d, state: %s", 
                 pin, state ? "true" : "false");
 
-    // General outputs start at #10010, one address per pin (0-7)
-    rcs::v1::SetIOStatusRequest io_request;
-    auto * io = io_request.add_io_request();
-    io->set_address(10010 + pin);
-    io->set_value(state);
+    // Command a single output interface of the "gpio_io" group
+    control_msgs::msg::DynamicInterfaceGroupValues msg;
+    msg.interface_groups.push_back("gpio_io");
+    control_msgs::msg::InterfaceValue values;
+    values.interface_names.push_back("digital_output_" + std::to_string(pin - 1));
+    values.values.push_back(static_cast<double>(state));
+    msg.interface_values.push_back(values);
+    gpio_command_publisher_->publish(msg);
 
-    grpc::ClientContext context;
-    context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(1));
-    rcs::v1::SetIOStatusResponse io_response;
-    grpc::Status status = io_stub_->SetIOStatus(&context, io_request, &io_response);
-
-    if (!status.ok()) {
-      RCLCPP_ERROR(this->get_logger(), "[Set Io Service] gRPC call failed: %s", status.error_message().c_str());
-      response->success = false;
-      response->message = "Io update failed: " + status.error_message();
-      return;
-    }
-    if (io_response.status() != rcs::v1::SetIOStatusResponse::STATUS_SUCCESS) {
-      RCLCPP_ERROR(this->get_logger(), "[Set Io Service] Controller rejected request (status %d).", static_cast<int>(io_response.status()));
-      response->success = false;
-      response->message = "Io update failed: Controller returned status " + std::to_string(static_cast<int>(io_response.status())) + ".";
-      return;
-    }
-
-    RCLCPP_INFO(this->get_logger(), "[Set Io Service] Successfully set io.");
+    // The command is applied asynchronously by the hardware interface.
     response->success = true;
-    response->message = "Io successfully updated.";
+    response->message = "Io command sent.";
   }
-}  // namespace ynx_robot_managr
+}  // namespace ynx_robot_manager

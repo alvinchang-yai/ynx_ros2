@@ -1,8 +1,10 @@
 #ifndef YNX_HARDWARE_INTERFACE__YNX_HARDWARE_INTERFACE_HPP_
 #define YNX_HARDWARE_INTERFACE__YNX_HARDWARE_INTERFACE_HPP_
 
+#include <array>
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -23,7 +25,7 @@
 #include "rcs/v1/motion_api.grpc.pb.h"
 // #include "rcs/v1/event_api.grpc.pb.h"
 // #include "rcs/v1/file_api.grpc.pb.h"
-// #include "rcs/v1/io_api.grpc.pb.h"
+#include "rcs/v1/io_api.grpc.pb.h"
 // #include "rcs/v1/job_control.grpc.pb.h"
 // #include "rcs/v1/mode_get.grpc.pb.h"
 // #include "rcs/v1/position_types.grpc.pb.h"
@@ -76,6 +78,21 @@ private:
   std::vector<double> previous_position_states_;
   std::vector<double> velocity_states_;
 
+  // --- General digital I/O (ros2_control <gpio name="gpio_io">) ---
+  // Pins 0-7 map to controller general input #00010-#00017 and general output
+  // #10010-#10017. The exported interfaces are only touched from read()/write()
+  // (the RT thread); the background thread below is the only one that talks
+  // gRPC and hands data over through io_mutex_ / the cache below.
+  static constexpr size_t kNumGpio = 8;
+  static constexpr uint32_t kGpioInputBaseAddress = 10;
+  static constexpr uint32_t kGpioOutputBaseAddress = 10010;
+  static constexpr int kIoPollIntervalMs = 20;
+  static constexpr int kIoDeadlineMs = 200;
+
+  std::array<double, kNumGpio> gpio_input_states_{};
+  std::array<double, kNumGpio> gpio_output_states_{};
+  std::array<double, kNumGpio> gpio_output_commands_{};
+
   // --- gRPC Objects ---
   std::shared_ptr<grpc::Channel> grpc_channel_;
   std::unique_ptr<rcs::v1::RealtimeMonitorService::Stub> monitor_stub_;
@@ -83,6 +100,7 @@ private:
   std::unique_ptr<rcs::v1::ServoPowerControlService::Stub> servo_stub_;
   std::unique_ptr<rcs::v1::AlarmControlService::Stub> alarm_stub_;
   std::unique_ptr<rcs::v1::SystemInfoService::Stub> system_stub_;
+  std::unique_ptr<rcs::v1::IOService::Stub> io_stub_;
 
   // --- Full-trajectory recording ---
   // Streams four checkpoints of every control cycle, for the whole movement, so
@@ -150,6 +168,22 @@ private:
   std::atomic<bool> alarm_fault_{false};
   std::atomic<bool> alarm_thread_running_{false};
   std::thread alarm_thread_;
+
+  // --- Async I/O: background poll + write thread ---
+  // read() copies the cached input/output levels, write() only records which
+  // outputs changed. The background thread does the actual GetIOStatus /
+  // SetIOStatus calls, so the RT loop never blocks on the network. read() and
+  // write() use try_lock: on contention they skip one cycle rather than wait.
+  std::mutex io_mutex_;
+  std::array<uint32_t, kNumGpio> io_cached_inputs_{};    // protected by io_mutex_
+  std::array<uint32_t, kNumGpio> io_cached_outputs_{};   // protected by io_mutex_
+  std::array<int, kNumGpio> io_pending_{};                // -1 = nothing to send, else 0/1; protected by io_mutex_
+  std::array<double, kNumGpio> io_last_commanded_{};      // RT thread only (write())
+  std::thread io_thread_;
+  std::atomic<bool> io_thread_running_{false};
+
+  bool readIoStatus(std::array<uint32_t, kNumGpio> & inputs, std::array<uint32_t, kNumGpio> & outputs);
+  void ioLoop();
 
   static constexpr double kFeedbackStreamRateHz = 250.0;
   // Loosened after real-hardware testing: 3x the ~4ms sample interval (12ms) tripped

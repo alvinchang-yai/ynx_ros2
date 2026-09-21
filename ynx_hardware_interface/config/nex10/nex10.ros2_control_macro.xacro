@@ -70,6 +70,34 @@
         </state_interface>
       </joint>
 
+      <!-- General digital I/O, pins 0-7 (controller general input #00010-17, output #10010-17) -->
+      <gpio name="gpio_io">
+        <state_interface name="digital_input_0"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="digital_input_1"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="digital_input_2"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="digital_input_3"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="digital_input_4"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="digital_input_5"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="digital_input_6"><param name="initial_value">0.0</param></state_interface>
+        <state_interface name="digital_input_7"><param name="initial_value">0.0</param></state_interface>
+        <command_interface name="digital_output_0"/>
+        <state_interface name="digital_output_0"><param name="initial_value">0.0</param></state_interface>
+        <command_interface name="digital_output_1"/>
+        <state_interface name="digital_output_1"><param name="initial_value">0.0</param></state_interface>
+        <command_interface name="digital_output_2"/>
+        <state_interface name="digital_output_2"><param name="initial_value">0.0</param></state_interface>
+        <command_interface name="digital_output_3"/>
+        <state_interface name="digital_output_3"><param name="initial_value">0.0</param></state_interface>
+        <command_interface name="digital_output_4"/>
+        <state_interface name="digital_output_4"><param name="initial_value">0.0</param></state_interface>
+        <command_interface name="digital_output_5"/>
+        <state_interface name="digital_output_5"><param name="initial_value">0.0</param></state_interface>
+        <command_interface name="digital_output_6"/>
+        <state_interface name="digital_output_6"><param name="initial_value">0.0</param></state_interface>
+        <command_interface name="digital_output_7"/>
+        <state_interface name="digital_output_7"><param name="initial_value">0.0</param></state_interface>
+      </gpio>
+
     </ros2_control>
   </xacro:macro>
 </robot>

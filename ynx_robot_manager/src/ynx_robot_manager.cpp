@@ -6,8 +6,6 @@ namespace ynx_robot_manager
     ns_ = this->get_parameter("ns").as_string();
     tf_prefix_ = this->get_parameter("tf_prefix").as_string();
     planning_group_ = tf_prefix_ + "manipulator"; 
-    ip_ = this->has_parameter("ip") ? this->get_parameter("ip").as_string() : "192.168.19.201";
-    port_ = this->has_parameter("port") ? this->get_parameter("port").as_string() : "50300";
     RCLCPP_INFO(this->get_logger(), "Initilizing Robot Manager with namespace: /%s and planning group: %s", ns_.c_str(), planning_group_.c_str());
   }
 
@@ -65,9 +63,9 @@ namespace ynx_robot_manager
         rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile(),
         service_cb_group_
         );
-    // Set Io Service (gRPC connection is lazy, so this doesn't block if the controller is offline)
-    RCLCPP_INFO(this->get_logger(), "Io service connecting to %s:%s", ip_.c_str(), port_.c_str());
-    io_stub_ = rcs::v1::IOService::NewStub(grpc::CreateChannel(ip_ + ":" + port_, grpc::InsecureChannelCredentials()));
+    // Set Io Service (commands go to the ros2_control gpio_command_controller, not to the robot directly)
+    gpio_command_publisher_ = this->create_publisher<control_msgs::msg::DynamicInterfaceGroupValues>(
+        "gpio_command_controller/commands", rclcpp::QoS(10));
     set_io_service_ = this->create_service<SetIo>(
         "set_io",
         std::bind(&YnxRobotManager::set_io_service_callback, this, std::placeholders::_1, std::placeholders::_2),
